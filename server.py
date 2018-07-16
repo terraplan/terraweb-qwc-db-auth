@@ -44,7 +44,7 @@ def load_user(id):
     return user_query().get(int(id))
 
 
-@app.route('/auth/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     target_url = request.args.get('url', '/')
     if current_user.is_authenticated:
@@ -70,7 +70,7 @@ def login():
     return render_template('login.html', title='Sign In', form=form)
 
 
-@app.route('/auth/logout', methods=['GET', 'POST'])
+@app.route('/logout', methods=['GET', 'POST'])
 @jwt_required
 def logout():
     target_url = request.args.get('url', '/')

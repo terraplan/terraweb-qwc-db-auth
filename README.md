@@ -13,9 +13,9 @@ Run standalone application:
 
 Endpoints:
 
-    http://localhost:5017/auth/login
+    http://localhost:5017/login
 
-    http://localhost:5017/auth/logout
+    http://localhost:5017/logout
 
 
 Development
