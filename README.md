@@ -1,0 +1,38 @@
+Authentication with User DB
+===========================
+
+Authentication service with local user database.
+
+
+Usage
+-----
+
+Run standalone application:
+
+    python server.py
+
+Endpoints:
+
+    http://localhost:5017/auth/login
+
+    http://localhost:5017/auth/logout
+
+
+Development
+-----------
+
+Create a virtual environment:
+
+    virtualenv --python=/usr/bin/python3 .venv
+
+Activate virtual environment:
+
+    source .venv/bin/activate
+
+Install requirements:
+
+    pip install -r requirements.txt
+
+Start local service:
+
+    python server.py

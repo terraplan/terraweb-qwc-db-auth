@@ -1,0 +1,7 @@
+Flask==0.12.2
+flask-jwt-extended==3.5.1
+flask_login
+Flask-WTF
+psycopg2
+git+https://github.com/qwc-services/qwc-services-core.git#egg=qwc-services-core
+git+https://github.com/qwc-services/qwc-config-db.git#egg=qwc-config-db
