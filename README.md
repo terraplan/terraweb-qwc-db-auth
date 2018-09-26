@@ -4,6 +4,15 @@ Authentication with User DB
 Authentication service with local user database.
 
 
+Configuration
+-------------
+
+Besides the form based DB login, an (insecure) plain POST login is supported. This method can be
+activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as POST parameters 
+`username` and `password`.
+Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/login`.
+
+
 Usage
 -----
 

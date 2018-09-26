@@ -21,6 +21,10 @@ app.secret_key = os.environ.get(
         'JWT_SECRET_KEY',
         'CHANGE-ME-1ef43ade8807dc37a6588cb8fb9dec4caf6dfd0e00398f9a')
 
+POST_PARAM_LOGIN = os.environ.get("POST_PARAM_LOGIN", default="False")
+if POST_PARAM_LOGIN.lower() in ("f", "false"):
+    POST_PARAM_LOGIN = False
+
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
 
@@ -49,25 +53,42 @@ def login():
     target_url = request.args.get('url', '/')
     if current_user.is_authenticated:
         return redirect(target_url)
+
+    if POST_PARAM_LOGIN:
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if username:
+            user = user_query().filter_by(name=username).first()
+            if user is None or not user.check_password(password):
+                app.logger.info(
+                    "POST_PARAM_LOGIN: Invalid username or password")
+                return redirect(url_for('login'))
+            return __login_response(user, target_url)
+
     form = LoginForm()
     if form.validate_on_submit():
         user = user_query().filter_by(name=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
             return redirect(url_for('login'))
-        app.logger.info("Logging in as user '%s'" % user.name)
-        login_user(user)
-
-        # Create the tokens we will be sending back to the user
-        access_token = create_access_token(identity=user.name)
-        # refresh_token = create_refresh_token(identity=username)
-
-        resp = make_response(redirect(target_url))
-        # Set the JWTs and the CSRF double submit protection cookies
-        # in this response
-        set_access_cookies(resp, access_token)
-        return resp
+        return __login_response(user, target_url)
     return render_template('login.html', title='Sign In', form=form)
+
+
+def __login_response(user, target_url):
+    app.logger.info("Logging in as user '%s'" % user.name)
+    login_user(user)
+
+    # Create the tokens we will be sending back to the user
+    access_token = create_access_token(identity=user.name)
+    # refresh_token = create_refresh_token(identity=username)
+
+    resp = make_response(redirect(target_url))
+    # Set the JWTs and the CSRF double submit protection cookies
+    # in this response
+    set_access_cookies(resp, access_token)
+
+    return resp
 
 
 @app.route('/logout', methods=['GET', 'POST'])
