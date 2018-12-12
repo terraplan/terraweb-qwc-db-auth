@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 
@@ -25,6 +26,9 @@ POST_PARAM_LOGIN = os.environ.get("POST_PARAM_LOGIN", default="False")
 if POST_PARAM_LOGIN.lower() in ("f", "false"):
     POST_PARAM_LOGIN = False
 
+# max number of failed login attempts before sign in is blocked
+MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 20))
+
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
 
@@ -51,6 +55,8 @@ def load_user(id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     target_url = request.args.get('url', '/')
+    retry_target_url = request.args.get('url', None)
+
     if current_user.is_authenticated:
         return redirect(target_url)
 
@@ -59,20 +65,55 @@ def login():
         password = request.form.get('password')
         if username:
             user = user_query().filter_by(name=username).first()
-            if user is None or not user.check_password(password):
+            if __user_is_authorized(user, password):
+                return __login_response(user, target_url)
+            else:
                 app.logger.info(
                     "POST_PARAM_LOGIN: Invalid username or password")
-                return redirect(url_for('login'))
-            return __login_response(user, target_url)
+                return redirect(url_for('login', url=retry_target_url))
 
     form = LoginForm()
     if form.validate_on_submit():
         user = user_query().filter_by(name=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
+        if __user_is_authorized(user, form.password.data):
+            return __login_response(user, target_url)
+        else:
             flash('Invalid username or password')
-            return redirect(url_for('login'))
-        return __login_response(user, target_url)
+            return redirect(url_for('login', url=retry_target_url))
+
     return render_template('login.html', title='Sign In', form=form)
+
+
+def __user_is_authorized(user, password):
+    """Check credentials, update user sign in fields and
+    return whether user is authorized.
+
+    :param User user: User instance
+    :param str password: Password
+    """
+    if user is None:
+        # invalid username
+        return False
+    elif user.check_password(password):
+        # valid credentials
+        if user.failed_sign_in_count < MAX_LOGIN_ATTEMPTS:
+            # update last sign in timestamp and reset failed attempts counter
+            user.last_sign_in_at = datetime.utcnow()
+            user.failed_sign_in_count = 0
+            user_query().session.commit()
+
+            return True
+        else:
+            # block sign in due to too many login attempts
+            return False
+    else:
+        # invalid password
+
+        # increase failed login attempts counter
+        user.failed_sign_in_count += 1
+        user_query().session.commit()
+
+        return False
 
 
 def __login_response(user, target_url):

@@ -16,6 +16,9 @@ Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/logi
 Usage
 -----
 
+Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of 
+failed login attempts before sign in is blocked (default: `20`).
+
 Run standalone application:
 
     python server.py
