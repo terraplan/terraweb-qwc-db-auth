@@ -12,6 +12,20 @@ activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as PO
 `username` and `password`.
 Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/login`.
 
+[Flask-Mail](https://pythonhosted.org/Flask-Mail/) is used for sending mails like password resets. These are the available options:
+* `MAIL_SERVER`: default ‘localhost’
+* `MAIL_PORT`: default 25
+* `MAIL_USE_TLS`: default False
+* `MAIL_USE_SSL`: default False
+* `MAIL_DEBUG`: default app.debug
+* `MAIL_USERNAME`: default None
+* `MAIL_PASSWORD`: default None
+* `MAIL_DEFAULT_SENDER`: default None
+* `MAIL_MAX_EMAILS`: default None
+* `MAIL_SUPPRESS_SEND`: default app.testing
+* `MAIL_ASCII_ATTACHMENTS`: default False
+
+In addition the standard Flask `TESTING` configuration option is used by Flask-Mail in unit tests.
 
 Usage
 -----

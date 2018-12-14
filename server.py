@@ -11,6 +11,7 @@ from flask_jwt_extended import (
     get_jwt_identity, set_access_cookies,
     set_refresh_cookies, unset_jwt_cookies
 )
+from flask_mail import Mail
 from forms import LoginForm
 from qwc_services_core.jwt import jwt_manager
 from qwc_services_core.database import DatabaseEngine
@@ -35,6 +36,28 @@ login = LoginManager(app)
 jwt = jwt_manager(app)
 
 session_query = None
+
+
+def mail_config_from_env(app):
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', '127.0.0.1')
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 25))
+    app.config['MAIL_USE_TLS'] = os.environ.get(
+        'MAIL_USE_TLS', 'False') == 'True'
+    app.config['MAIL_USE_SSL'] = os.environ.get(
+        'MAIL_USE_SSL', 'False') == 'True'
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+    app.config['MAIL_DEBUG'] = int(os.environ.get('MAIL_DEBUG', app.debug))
+    app.config['MAIL_MAX_EMAILS'] = os.environ.get('MAIL_MAX_EMAILS')
+    app.config['MAIL_SUPPRESS_SEND'] = os.environ.get(
+        'MAIL_SUPPRESS_SEND', str(app.testing)) == 'True'
+    app.config['MAIL_ASCII_ATTACHMENTS'] = os.environ.get(
+        'MAIL_ASCII_ATTACHMENTS', False)
+
+
+mail_config_from_env(app)
+mail = Mail(app)
 
 
 def user_query():
