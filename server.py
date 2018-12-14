@@ -1,6 +1,7 @@
+import logging
 import os
 
-from flask import Flask
+from flask import Flask, request
 from flask_login import LoginManager
 from flask_jwt_extended import jwt_required, jwt_optional
 from flask_mail import Mail
@@ -45,7 +46,8 @@ mail_config_from_env(app)
 mail = Mail(app)
 
 # create DB auth
-db_auth = DBAuth(app.logger)
+db_auth = DBAuth(mail, app.logger)
+
 
 @login.user_loader
 def load_user(id):
@@ -63,5 +65,17 @@ def logout():
     return db_auth.logout()
 
 
+@app.route('/password/new', methods=['GET', 'POST'])
+def new_password():
+    return db_auth.new_password()
+
+
+@app.route('/password/edit', methods=['GET', 'POST'])
+def edit_password():
+    token = request.args.get('reset_password_token')
+    return db_auth.edit_password(token)
+
+
 if __name__ == '__main__':
+    app.logger.setLevel(logging.DEBUG)
     app.run(host='localhost', port=5017, debug=True)

@@ -14,6 +14,9 @@ body {
   margin: 20px auto;
   width: 300px;
 }
+.new-password {
+  width: 450px;
+}
 .login-screen {
   background-color: #FFF;
   padding: 20px;

@@ -61,4 +61,4 @@ Install requirements:
 
 Start local service:
 
-    python server.py
+    MAIL_SUPPRESS_SEND=True MAIL_DEFAULT_SENDER=from@example.com python server.py
