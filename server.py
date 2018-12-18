@@ -77,5 +77,6 @@ def edit_password():
 
 
 if __name__ == '__main__':
+    print("Starting DB Auth service...")
     app.logger.setLevel(logging.DEBUG)
     app.run(host='localhost', port=5017, debug=True)

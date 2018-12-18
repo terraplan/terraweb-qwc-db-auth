@@ -28,6 +28,9 @@ class DBAuth:
     Provide user login and password reset with local user database.
     """
 
+    # name of default admin user
+    DEFAULT_ADMIN_USER = 'admin'
+
     def __init__(self, mail, logger):
         """Constructor
 
@@ -61,8 +64,19 @@ class DBAuth:
         form = LoginForm()
         if form.validate_on_submit():
             user = self.user_query().filter_by(name=form.username.data).first()
+
+            # force password change on first sign in of default admin user
+            # NOTE: user.last_sign_in_at will be set after successful auth
+            force_password_change = (
+                user and user.name == self.DEFAULT_ADMIN_USER
+                and user.last_sign_in_at is None
+            )
+
             if self.__user_is_authorized(user, form.password.data):
-                return self.__login_response(user, target_url)
+                if not force_password_change:
+                    return self.__login_response(user, target_url)
+                else:
+                    return self.require_password_change(user, target_url)
             else:
                 flash('Invalid username or password')
                 return redirect(url_for('login', url=retry_target_url))
@@ -83,19 +97,8 @@ class DBAuth:
         if form.validate_on_submit():
             user = self.user_query().filter_by(email=form.email.data).first()
             if user:
-                token = None
-                while token is None:
-                    # generate reset token
-                    token = base64.urlsafe_b64encode(os.urandom(15)). \
-                        rstrip(b'=').decode('ascii')
-
-                    # check uniqueness of token
-                    if self.find_user_by_token(token):
-                        # token already present
-                        token = None
-
-                # save token
-                user.reset_password_token = token
+                # generate and save reset token
+                user.reset_password_token = self.generate_token()
                 self.user_query().session.commit()
 
                 # send password reset instructions
@@ -136,6 +139,10 @@ class DBAuth:
                 user.set_password(form.password.data)
                 # clear token
                 user.reset_password_token = None
+                if user.last_sign_in_at is None:
+                    # set last sign in timestamp after required password change
+                    # to mark as password changed
+                    user.last_sign_in_at = datetime.utcnow()
                 self.user_query().session.commit()
 
                 flash("Your password was changed successfully.")
@@ -148,9 +155,32 @@ class DBAuth:
                     form=form
                 )
 
-        # set hidden field
-        form.reset_password_token.data = token
+        if token:
+            # set hidden field
+            form.reset_password_token.data = token
 
+        return render_template(
+            'edit_password.html', title='Change your password', form=form
+        )
+
+    def require_password_change(self, user, target_url):
+        """Show form for required password change.
+
+        :param User user: User instance
+        :param str target_url: URL for redirect
+        """
+        # clear last sign in timestamp and generate reset token
+        # to mark as requiring password change
+        user.last_sign_in_at = None
+        user.reset_password_token = self.generate_token()
+        self.user_query().session.commit()
+
+        # show password reset form
+        form = EditPasswordForm()
+        # set hidden field
+        form.reset_password_token.data = user.reset_password_token
+
+        flash("Please choose a new password")
         return render_template(
             'edit_password.html', title='Change your password', form=form
         )
@@ -224,6 +254,21 @@ class DBAuth:
         set_access_cookies(resp, access_token)
 
         return resp
+
+    def generate_token(self):
+        """Generate new token."""
+        token = None
+        while token is None:
+            # generate token
+            token = base64.urlsafe_b64encode(os.urandom(15)). \
+                rstrip(b'=').decode('ascii')
+
+            # check uniqueness of token
+            if self.find_user_by_token(token):
+                # token already present
+                token = None
+
+        return token
 
     def send_reset_passwort_instructions(self, user):
         """Send mail with reset password instructions to user.

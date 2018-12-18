@@ -18,7 +18,7 @@ class EditPasswordForm(FlaskForm):
     reset_password_token = HiddenField(validators=[Optional()])
     password = PasswordField(
         'New password',
-        validators=[DataRequired()]#, Length(min=8)]
+        validators=[DataRequired(), Length(min=8)]
     )
     password_confirmation = PasswordField(
         'Confirm new password',
