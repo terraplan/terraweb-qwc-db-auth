@@ -3,15 +3,16 @@ from datetime import datetime
 import os
 
 from flask import request, flash, render_template, redirect, make_response, \
-    url_for
+    url_for, session
 from flask_login import current_user, login_user, logout_user
 from flask_jwt_extended import create_access_token, create_refresh_token, \
     set_access_cookies, unset_jwt_cookies
 from flask_mail import Message
+import pyotp
 
 from qwc_services_core.database import DatabaseEngine
 from qwc_config_db.config_models import ConfigModels
-from forms import LoginForm, NewPasswordForm, EditPasswordForm
+from forms import LoginForm, NewPasswordForm, EditPasswordForm, VerifyForm
 
 
 POST_PARAM_LOGIN = os.environ.get("POST_PARAM_LOGIN", default="False")
@@ -20,6 +21,9 @@ if POST_PARAM_LOGIN.lower() in ("f", "false"):
 
 # max number of failed login attempts before sign in is blocked
 MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 20))
+
+# enable two factor authentication using TOTP
+TOTP_ENABLED = os.environ.get("TOTP_ENABLED", default="False") == 'True'
 
 
 class DBAuth:
@@ -45,6 +49,8 @@ class DBAuth:
         """Authorize user and sign in."""
         target_url = request.args.get('url', '/')
         retry_target_url = request.args.get('url', None)
+
+        self.clear_verify_session()
 
         if current_user.is_authenticated:
             return redirect(target_url)
@@ -74,7 +80,14 @@ class DBAuth:
 
             if self.__user_is_authorized(user, form.password.data):
                 if not force_password_change:
-                    return self.__login_response(user, target_url)
+                    if TOTP_ENABLED:
+                        # show form for verification token
+                        session['login_uid'] = user.id
+                        session['target_url'] = target_url
+                        return self.verify(False)
+                    else:
+                        # login successful
+                        return self.__login_response(user, target_url)
                 else:
                     return self.require_password_change(user, target_url)
             else:
@@ -83,8 +96,42 @@ class DBAuth:
 
         return render_template('login.html', title='Sign In', form=form)
 
+    def verify(self, submit=True):
+        """Show form for TOTP verification token.
+
+        :param bool submit: Whether form was submitted
+                            (False if shown after login form)
+        """
+        if not TOTP_ENABLED or 'login_uid' not in session:
+            # TOTP not enabled or not in login process
+            return redirect(url_for('login'))
+
+        user = self.load_user(session.get('login_uid', None))
+        if user is None:
+            # user not found
+            return redirect(url_for('login'))
+
+        form = VerifyForm()
+        if submit and form.validate_on_submit():
+            if self.user_totp_is_valid(user, form.token.data):
+                # TOTP verified
+                target_url = session.pop('target_url', '/')
+                self.clear_verify_session()
+                return self.__login_response(user, target_url)
+            else:
+                flash('Invalid verification code')
+                form.token.errors.append('Invalid verification code')
+                form.token.data = None
+
+            if user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS:
+                # redirect to login after too many login attempts
+                return redirect(url_for('login'))
+
+        return render_template('verify.html', title='Sign In', form=form)
+
     def logout(self):
         """Sign out."""
+        self.clear_verify_session()
         target_url = request.args.get('url', '/')
         resp = make_response(redirect(target_url))
         unset_jwt_cookies(resp)
@@ -221,11 +268,12 @@ class DBAuth:
         elif user.check_password(password):
             # valid credentials
             if user.failed_sign_in_count < MAX_LOGIN_ATTEMPTS:
-                # update last sign in timestamp and reset failed attempts
-                # counter
-                user.last_sign_in_at = datetime.utcnow()
-                user.failed_sign_in_count = 0
-                self.user_query().session.commit()
+                if not TOTP_ENABLED:
+                    # update last sign in timestamp and reset failed attempts
+                    # counter
+                    user.last_sign_in_at = datetime.utcnow()
+                    user.failed_sign_in_count = 0
+                    self.user_query().session.commit()
 
                 return True
             else:
@@ -239,6 +287,38 @@ class DBAuth:
             self.user_query().session.commit()
 
             return False
+
+    def user_totp_is_valid(self, user, token):
+        """Check TOTP token, update user sign in fields and
+        return whether user is authorized.
+
+        :param User user: User instance
+        :param str token: TOTP token
+        """
+        if user is None or not user.totp_secret:
+            # invalid user ID or blank TOTP secret
+            return False
+        elif pyotp.totp.TOTP(user.totp_secret).verify(token, valid_window=1):
+            # valid token
+            # update last sign in timestamp and reset failed attempts counter
+            user.last_sign_in_at = datetime.utcnow()
+            user.failed_sign_in_count = 0
+            self.user_query().session.commit()
+
+            return True
+        else:
+            # invalid token
+
+            # increase failed login attempts counter
+            user.failed_sign_in_count += 1
+            self.user_query().session.commit()
+
+            return False
+
+    def clear_verify_session(self):
+        """Clear session values for TOTP verification."""
+        session.pop('login_uid', None)
+        session.pop('target_url', None)
 
     def __login_response(self, user, target_url):
         self.logger.info("Logging in as user '%s'" % user.name)

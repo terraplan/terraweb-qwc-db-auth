@@ -27,6 +27,10 @@ Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/logi
 
 In addition the standard Flask `TESTING` configuration option is used by Flask-Mail in unit tests.
 
+Two factor authentication using TOTP can be enabled by setting the environment variable `TOTP_ENABLED=True`.
+This will require an additional verification token after sign in, based on the user's TOTP secret.
+
+
 Usage
 -----
 

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Sign In</h1>
+    <form action="{{ url_for('verify') }}" method="post">
+        {{ form.hidden_tag() }}
+        <div class="login">
+            <div class="login-screen">
+                <div class="app-title">
+                    <h1>Enter your verification code</h1>
+                </div>
+     
+                <div class="login-form">
+                    <div class="control-group">
+                      {{ form.token(placeholder="Verification code", autocomplete="off", autofocus=True, class_='login-field') }}
+                      {% for error in form.token.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                      {% endfor %}
+                    </div>
+     
+                    <input type="submit" value="Log in" class="btn btn-primary btn-large btn-block" >
+                    <br>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

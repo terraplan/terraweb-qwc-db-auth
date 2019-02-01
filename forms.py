@@ -10,6 +10,10 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 
+class VerifyForm(FlaskForm):
+    token = StringField('Verification code', validators=[DataRequired()])
+
+
 class NewPasswordForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
 

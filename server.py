@@ -59,6 +59,11 @@ def login():
     return db_auth.login()
 
 
+@app.route('/verify', methods=['POST'])
+def verify():
+    return db_auth.verify()
+
+
 @app.route('/logout', methods=['GET', 'POST'])
 @jwt_required
 def logout():
