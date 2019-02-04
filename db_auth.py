@@ -376,8 +376,8 @@ class DBAuth:
         :param User user: User instance
         :param str password: Password
         """
-        if user is None:
-            # invalid username
+        if user is None or user.password_hash is None:
+            # invalid username or no password set
             return False
         elif user.check_password(password):
             # valid credentials
