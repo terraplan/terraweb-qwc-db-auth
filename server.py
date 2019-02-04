@@ -70,6 +70,16 @@ def logout():
     return db_auth.logout()
 
 
+@app.route('/totp', methods=['POST'])
+def setup_totp():
+    return db_auth.setup_totp()
+
+
+@app.route('/qrcode', methods=['GET'])
+def qrcode():
+    return db_auth.qrcode()
+
+
 @app.route('/password/new', methods=['GET', 'POST'])
 def new_password():
     return db_auth.new_password()

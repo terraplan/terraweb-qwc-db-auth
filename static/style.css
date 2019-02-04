@@ -17,6 +17,9 @@ body {
 .new-password {
   width: 450px;
 }
+.totp-setup {
+  width: 450px;
+}
 .login-screen {
   background-color: #FFF;
   padding: 20px;

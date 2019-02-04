@@ -7,6 +7,9 @@ Authentication service with local user database.
 Configuration
 -------------
 
+Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of 
+failed login attempts before sign in is blocked (default: `20`).
+
 Besides the form based DB login, an (insecure) plain POST login is supported. This method can be
 activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as POST parameters 
 `username` and `password`.
@@ -27,15 +30,19 @@ Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/logi
 
 In addition the standard Flask `TESTING` configuration option is used by Flask-Mail in unit tests.
 
+### Two factor authentication
+
 Two factor authentication using TOTP can be enabled by setting the environment variable `TOTP_ENABLED=True`.
 This will require an additional verification token after sign in, based on the user's TOTP secret.
+
+A personal QR code for setting up the two factor authentication is shown to the user on first sign in (or if the TOTP secret is empty).
+The TOTP issuer name for your application can be set using the environment variable `TOTP_ISSUER_NAME="QWC Services"`.
+
+An user's TOTP secret can be reset by clearing it in the Admin GUI user form.
 
 
 Usage
 -----
-
-Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of 
-failed login attempts before sign in is blocked (default: `20`).
 
 Run standalone application:
 
