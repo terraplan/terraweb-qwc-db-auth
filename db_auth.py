@@ -178,6 +178,10 @@ class DBAuth:
 
                 # save TOTP secret
                 user.totp_secret = totp_secret
+                # update last sign in timestamp and reset failed attempts
+                # counter
+                user.last_sign_in_at = datetime.utcnow()
+                user.failed_sign_in_count = 0
                 self.user_query().session.commit()
 
                 target_url = session.pop('target_url', '/')
