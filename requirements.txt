@@ -4,7 +4,7 @@ Flask-Login==0.4.1
 Flask-WTF==0.14.2
 Flask-Mail==0.9.1
 Pillow==5.4.1
-psycopg2==2.7.6.1
+psycopg2
 pyotp==2.2.7
 qrcode==6.1
 git+https://github.com/qwc-services/qwc-services-core.git@e925d60269a3147d16719ea669cfb55e32c9fa4f#egg=qwc-services-core
