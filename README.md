@@ -1,3 +1,6 @@
+[![](https://github.com/qwc-services/qwc-db-auth/workflows/build/badge.svg)](https://hub.docker.com/repository/docker/sourcepole/qwc-db-auth)
+[![](https://img.shields.io/docker/pulls/sourcepole/qwc-db-auth)](https://hub.docker.com/repository/docker/sourcepole/qwc-db-auth)
+
 Authentication with User DB
 ===========================
 
@@ -7,11 +10,11 @@ Authentication service with local user database.
 Configuration
 -------------
 
-Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of 
+Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of
 failed login attempts before sign in is blocked (default: `20`).
 
 Besides the form based DB login, an (insecure) plain POST login is supported. This method can be
-activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as POST parameters 
+activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as POST parameters
 `username` and `password`.
 Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/login`.
 
