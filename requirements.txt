@@ -3,12 +3,12 @@ Flask-JWT-Extended==3.5.1
 Flask-Login==0.4.1
 Flask-WTF==0.14.2
 Flask-Mail==0.9.1
+python-dotenv==0.13.0
 Pillow==6.2.0
-psycopg2==2.7.7
+psycopg2-binary==2.8.5
 pyotp==2.2.7
 qrcode==6.1
 SQLAlchemy==1.2.18
 werkzeug==0.16.1
 email_validator==1.0.5
-git+https://github.com/qwc-services/qwc-services-core.git@e925d60269a3147d16719ea669cfb55e32c9fa4f#egg=qwc-services-core
-git+https://github.com/qwc-services/qwc-config-db.git@87dc9a1a8224f6db5d6703b437bfb654bd451b7e#egg=qwc-config-db
+qwc-services-core==0.1.3

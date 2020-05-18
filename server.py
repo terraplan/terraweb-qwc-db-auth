@@ -7,6 +7,7 @@ from flask_jwt_extended import jwt_required, jwt_optional
 from flask_mail import Mail
 
 from qwc_services_core.jwt import jwt_manager
+from qwc_services_core.tenant_handler import TenantHandler
 from db_auth import DBAuth
 
 
@@ -45,50 +46,59 @@ def mail_config_from_env(app):
 mail_config_from_env(app)
 mail = Mail(app)
 
-# create DB auth
-db_auth = DBAuth(mail, app.logger)
+tenant_handler = TenantHandler(app.logger)
+
+
+def db_auth_handler():
+    """Get or create a DBAuth instance for a tenant."""
+    tenant = tenant_handler.tenant()
+    handler = tenant_handler.handler('dbAuth', 'handler', tenant)
+    if handler is None:
+        handler = tenant_handler.register_handler(
+            'handler', tenant, DBAuth(tenant, mail, app.logger))
+    return handler
 
 
 @login.user_loader
 def load_user(id):
-    return db_auth.load_user(id)
+    return db_auth_handler().load_user(id)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return db_auth.login()
+    return db_auth_handler().login()
 
 
 @app.route('/verify', methods=['POST'])
 def verify():
-    return db_auth.verify()
+    return db_auth_handler().verify()
 
 
 @app.route('/logout', methods=['GET', 'POST'])
 @jwt_required
 def logout():
-    return db_auth.logout()
+    return db_auth_handler().logout()
 
 
 @app.route('/totp', methods=['POST'])
 def setup_totp():
-    return db_auth.setup_totp()
+    return db_auth_handler().setup_totp()
 
 
 @app.route('/qrcode', methods=['GET'])
 def qrcode():
-    return db_auth.qrcode()
+    return db_auth_handler().qrcode()
 
 
 @app.route('/password/new', methods=['GET', 'POST'])
 def new_password():
-    return db_auth.new_password()
+    return db_auth_handler().new_password()
 
 
 @app.route('/password/edit', methods=['GET', 'POST'])
 def edit_password():
     token = request.args.get('reset_password_token')
-    return db_auth.edit_password(token)
+    return db_auth_handler().edit_password(token)
 
 
 """ readyness probe endpoint """

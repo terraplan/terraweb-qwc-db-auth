@@ -13,7 +13,9 @@ import pyotp
 import qrcode
 
 from qwc_services_core.database import DatabaseEngine
-from qwc_config_db.config_models import ConfigModels
+from qwc_services_core.config_models import ConfigModels
+from qwc_services_core.runtime_config import RuntimeConfig
+
 from forms import LoginForm, NewPasswordForm, EditPasswordForm, VerifyForm
 
 
@@ -40,17 +42,24 @@ class DBAuth:
     # name of default admin user
     DEFAULT_ADMIN_USER = 'admin'
 
-    def __init__(self, mail, logger):
+    def __init__(self, tenant, mail, logger):
         """Constructor
 
+        :param str tenant: Tenant ID
         :param flask_mail.Mail mail: Application mailer
         :param Logger logger: Application logger
         """
+        self.tenant = tenant
         self.mail = mail
         self.logger = logger
 
+        config_handler = RuntimeConfig("dbAuth", logger)
+        config = config_handler.tenant_config(tenant)
+
+        db_url = config.get('db_url')
+
         db_engine = DatabaseEngine()
-        self.config_models = ConfigModels(db_engine)
+        self.config_models = ConfigModels(db_engine, db_url)
         self.User = self.config_models.model('users')
 
     def login(self):

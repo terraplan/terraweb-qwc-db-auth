@@ -10,6 +10,25 @@ Authentication service with local user database.
 Configuration
 -------------
 
+The static config files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
+e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
+
+### Admin Gui Service config
+
+* [JSON schema](schemas/qwc-db-auth.json)
+* File location: `$CONFIG_PATH/<tenant>/dbAuthConfig.json`
+
+Example:
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-db-auth/master/schemas/qwc-db-auth.json",
+  "service": "db-auth",
+  "config": {
+    "db_url": "postgresql:///?service=qwc_configdb"
+  }
+}
+```
+
 Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of
 failed login attempts before sign in is blocked (default: `20`).
 
@@ -73,6 +92,16 @@ Install requirements:
 
     pip install -r requirements.txt
 
+Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
+
+    export CONFIG_PATH=../qwc-docker/demo-config
+
+Configure environment:
+
+    echo FLASK_ENV=development >.flaskenv
+    export MAIL_SUPPRESS_SEND=True
+    export MAIL_DEFAULT_SENDER=from@example.com
+
 Start local service:
 
-    MAIL_SUPPRESS_SEND=True MAIL_DEFAULT_SENDER=from@example.com python server.py
+     python server.py
