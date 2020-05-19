@@ -1,4 +1,4 @@
-[![](https://github.com/qwc-services/qwc-db-auth/workflows/build/badge.svg)](https://hub.docker.com/repository/docker/sourcepole/qwc-db-auth)
+[![](https://github.com/qwc-services/qwc-db-auth/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-db-auth/actions)
 [![](https://img.shields.io/docker/pulls/sourcepole/qwc-db-auth)](https://hub.docker.com/repository/docker/sourcepole/qwc-db-auth)
 
 Authentication with User DB
