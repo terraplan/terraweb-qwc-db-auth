@@ -7,7 +7,8 @@ from flask_jwt_extended import jwt_required, jwt_optional
 from flask_mail import Mail
 
 from qwc_services_core.jwt import jwt_manager
-from qwc_services_core.tenant_handler import TenantHandler
+from qwc_services_core.tenant_handler import (
+    TenantHandler, TenantPrefixMiddleware)
 from db_auth import DBAuth
 
 
@@ -49,18 +50,9 @@ mail = Mail(app)
 tenant_handler = TenantHandler(app.logger)
 
 
-class TenantPrefixMiddleware(object):
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        if environ.get('HTTP_TENANT'):
-            prefix = '/'+environ.get('HTTP_TENANT')
-            environ['SCRIPT_NAME'] = prefix + environ.get('SCRIPT_NAME', '')
-        return self.app(environ, start_response)
-
-
-app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
+if os.environ.get('TENANT_HEADER'):
+    app.wsgi_app = TenantPrefixMiddleware(
+        app.wsgi_app, os.environ.get('TENANT_HEADER'))
 
 
 def db_auth_handler():
