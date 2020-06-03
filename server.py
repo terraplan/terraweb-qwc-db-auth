@@ -49,6 +49,20 @@ mail = Mail(app)
 tenant_handler = TenantHandler(app.logger)
 
 
+class TenantPrefixMiddleware(object):
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        if environ.get('HTTP_TENANT'):
+            prefix = '/'+environ.get('HTTP_TENANT')
+            environ['SCRIPT_NAME'] = prefix + environ.get('SCRIPT_NAME', '')
+        return self.app(environ, start_response)
+
+
+app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
+
+
 def db_auth_handler():
     """Get or create a DBAuth instance for a tenant."""
     tenant = tenant_handler.tenant()
