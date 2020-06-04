@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/qwc-services/qwc-db-auth/master/schemas/qwc-db-auth.json",
+  "title": "QWC DB authentication service",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "title": "JSON Schema",
+      "description": "Reference to JSON schema of this config",
+      "type": "string",
+      "format": "uri",
+      "default": "https://raw.githubusercontent.com/qwc-services/qwc-db-auth/master/schemas/qwc-db-auth.json"
+    },
+    "service": {
+      "title": "Service name",
+      "type": "string",
+      "const": "db-auth"
+    },
+    "config": {
+      "title": "Config options",
+      "type": "object",
+      "properties": {
+        "db_url": {
+          "description": "DB connection URL",
+          "type": "string"
+        }
+      },
+      "required": [
+        "db_url"
+      ]
+    }
+  },
+  "required": [
+    "service",
+    "config"
+  ]
+}
