@@ -61,7 +61,7 @@ def db_auth_handler():
     handler = tenant_handler.handler('dbAuth', 'handler', tenant)
     if handler is None:
         handler = tenant_handler.register_handler(
-            'handler', tenant, DBAuth(tenant, mail, app.logger))
+            'handler', tenant, DBAuth(tenant, mail, app))
     return handler
 
 

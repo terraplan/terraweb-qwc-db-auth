@@ -47,18 +47,19 @@ class DBAuth:
     USERNAME = 'username'
     PASSWORD = 'password'
 
-    def __init__(self, tenant, mail, logger):
+    def __init__(self, tenant, mail, app):
         """Constructor
 
         :param str tenant: Tenant ID
         :param flask_mail.Mail mail: Application mailer
-        :param Logger logger: Application logger
+        :param App app: Flask application
         """
         self.tenant = tenant
         self.mail = mail
-        self.logger = logger
+        self.app = app
+        self.logger = app.logger
 
-        config_handler = RuntimeConfig("dbAuth", logger)
+        config_handler = RuntimeConfig("dbAuth", self.logger)
         config = config_handler.tenant_config(tenant)
 
         db_url = config.get('db_url')
@@ -67,10 +68,19 @@ class DBAuth:
         self.config_models = ConfigModels(db_engine, db_url)
         self.User = self.config_models.model('users')
 
+    def tenant_prefix(self):
+        """URL prefix for tentant"""
+        if self.tenant == 'default':
+            return '/'
+        else:
+            return '/' + self.tenant
+        # TODO: use tenant_prefix() from TenantHandler
+
     def login(self):
         """Authorize user and sign in."""
-        target_url = request.args.get('url', '/')
+        target_url = request.args.get('url', self.tenant_prefix())
         retry_target_url = request.args.get('url', None)
+        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
 
         if POST_PARAM_LOGIN:
             # Pass additional parameter specified
@@ -88,10 +98,12 @@ class DBAuth:
         self.clear_verify_session()
 
         if current_user.is_authenticated:
+            # Note: This might end up in a loop when a user
+            # wants to switch to an other login
             return redirect(target_url)
 
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
 
         if POST_PARAM_LOGIN:
             username = req.get(self.USERNAME)
@@ -164,7 +176,7 @@ class DBAuth:
     def verify(self):
         """Handle submit of form for TOTP verification token."""
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
 
         return self.response(self.__verify(db_session), db_session)
 
@@ -205,16 +217,18 @@ class DBAuth:
     def logout(self):
         """Sign out."""
         self.clear_verify_session()
-        target_url = request.args.get('url', '/')
+        target_url = request.args.get('url', self.tenant_prefix())
         resp = make_response(redirect(target_url))
+        self.app.config['JWT_ACCESS_COOKIE_PATH'] = self.tenant_prefix()
         unset_jwt_cookies(resp)
+        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
         logout_user()
         return resp
 
     def setup_totp(self):
         """Handle submit of form with TOTP QR Code and token confirmation."""
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
 
         return self.response(self.__setup_totp(db_session), db_session)
 
@@ -301,7 +315,7 @@ class DBAuth:
             abort(404)
 
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
         # find user by ID
         user = self.find_user(db_session, id=session.get('login_uid', None))
         # close session
@@ -339,7 +353,7 @@ class DBAuth:
         form = NewPasswordForm()
         if form.validate_on_submit():
             # create session for ConfigDB
-            db_session = self.session()
+            db_session = self.db_session()
 
             user = self.find_user(db_session, email=form.email.data)
             if user:
@@ -386,7 +400,7 @@ class DBAuth:
         form = EditPasswordForm()
         if form.validate_on_submit():
             # create session for ConfigDB
-            db_session = self.session()
+            db_session = self.db_session()
 
             user = self.find_user(
                 db_session, reset_password_token=form.reset_password_token.data
@@ -448,7 +462,7 @@ class DBAuth:
             'edit_password.html', title='Change your password', form=form
         )
 
-    def session(self):
+    def db_session(self):
         """Return new session for ConfigDB."""
         return self.config_models.session()
 
@@ -477,7 +491,7 @@ class DBAuth:
         :param int id: User ID
         """
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
         # find user by ID
         user = self.find_user(db_session, id=id)
         # close session
@@ -491,7 +505,7 @@ class DBAuth:
         :param str: Password reset token
         """
         # create session for ConfigDB
-        db_session = self.session()
+        db_session = self.db_session()
         # find user by password reset token
         user = self.find_user(db_session, reset_password_token=token)
         # close session
@@ -570,6 +584,8 @@ class DBAuth:
 
     def __login_response(self, user, target_url):
         self.logger.info("Logging in as user '%s'" % user.name)
+        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
+        # flask_login stores user in session
         login_user(user)
 
         # Create the tokens we will be sending back to the user
@@ -579,6 +595,7 @@ class DBAuth:
         resp = make_response(redirect(target_url))
         # Set the JWTs and the CSRF double submit protection cookies
         # in this response
+        self.app.config['JWT_ACCESS_COOKIE_PATH'] = self.tenant_prefix()
         set_access_cookies(resp, access_token)
 
         return resp
