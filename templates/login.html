@@ -12,7 +12,7 @@
      
                 <div class="login-form">
                     <div class="control-group">
-                    <input type="text" class="login-field" value="" placeholder="username" name="username">
+                    <input type="text" class="login-field" value="" placeholder="username" name="username" autofocus="">
                     <label class="login-field-icon fui-user" for="login-name"></label>
                     {% for error in form.username.errors %}
                     <span style="color: red;">[{{ error }}]</span>
