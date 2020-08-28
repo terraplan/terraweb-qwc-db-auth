@@ -64,6 +64,18 @@ class DBAuth:
 
         db_url = config.get('db_url')
 
+        # get password constraints from config
+        self.password_constraints = {
+            'min_length': config.get('password_min_length', 8),
+            'max_length': config.get('password_max_length', -1),
+            'constraints': config.get('password_constraints', []),
+            'min_constraints': config.get('password_min_constraints', 0),
+            'constraints_message': config.get(
+                'password_constraints_message',
+                "Password does not match constraints"
+            )
+        }
+
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(db_engine, db_url)
         self.User = self.config_models.model('users')
@@ -397,7 +409,7 @@ class DBAuth:
 
         :param str: Password reset token
         """
-        form = EditPasswordForm()
+        form = self.edit_password_form()
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -453,13 +465,23 @@ class DBAuth:
         db_session.commit()
 
         # show password reset form
-        form = EditPasswordForm()
+        form = self.edit_password_form()
         # set hidden field
         form.reset_password_token.data = user.reset_password_token
 
         flash("Please choose a new password")
         return render_template(
             'edit_password.html', title='Change your password', form=form
+        )
+
+    def edit_password_form(self):
+        """Return password reset form with constraints from config."""
+        return EditPasswordForm(
+            self.password_constraints['min_length'],
+            self.password_constraints['max_length'],
+            self.password_constraints['constraints'],
+            self.password_constraints['min_constraints'],
+            self.password_constraints['constraints_message']
         )
 
     def db_session(self):

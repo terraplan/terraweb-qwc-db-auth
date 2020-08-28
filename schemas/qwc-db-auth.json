@@ -23,6 +23,29 @@
         "db_url": {
           "description": "DB connection URL",
           "type": "string"
+        },
+        "password_min_length": {
+          "description": "Min password length",
+          "type": "integer"
+        },
+        "password_max_length": {
+          "description": "Max password length",
+          "type": "integer"
+        },
+        "password_constraints": {
+          "description": "List of RegExes for additional password constraints",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "password_min_constraints": {
+          "description": "Min number of password_constraints to match for password to be valid",
+          "type": "integer"
+        },
+        "password_constraints_message": {
+          "description": "Validation message if password constraints are not met",
+          "type": "string"
         }
       },
       "required": [
