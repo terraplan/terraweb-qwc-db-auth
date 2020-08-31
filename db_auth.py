@@ -82,17 +82,13 @@ class DBAuth:
 
     def tenant_prefix(self):
         """URL prefix for tentant"""
-        if self.tenant == 'default':
-            return '/'
-        else:
-            return '/' + self.tenant
-        # TODO: use tenant_prefix() from TenantHandler
+        # TenantSessionInterface updates config['JWT_ACCESS_COOKIE_PATH']
+        return self.app.config.get('JWT_ACCESS_COOKIE_PATH', '/')
 
     def login(self):
         """Authorize user and sign in."""
         target_url = request.args.get('url', self.tenant_prefix())
         retry_target_url = request.args.get('url', None)
-        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
 
         if POST_PARAM_LOGIN:
             # Pass additional parameter specified
@@ -108,11 +104,6 @@ class DBAuth:
             target_url = urlunparse(parts)
 
         self.clear_verify_session()
-
-        if current_user.is_authenticated:
-            # Note: This might end up in a loop when a user
-            # wants to switch to an other login
-            return redirect(target_url)
 
         # create session for ConfigDB
         db_session = self.db_session()
@@ -212,7 +203,7 @@ class DBAuth:
         if submit and form.validate_on_submit():
             if self.user_totp_is_valid(user, form.token.data, db_session):
                 # TOTP verified
-                target_url = session.pop('target_url', '/')
+                target_url = session.pop('target_url', self.tenant_prefix())
                 self.clear_verify_session()
                 return self.__login_response(user, target_url)
             else:
@@ -231,9 +222,7 @@ class DBAuth:
         self.clear_verify_session()
         target_url = request.args.get('url', self.tenant_prefix())
         resp = make_response(redirect(target_url))
-        self.app.config['JWT_ACCESS_COOKIE_PATH'] = self.tenant_prefix()
         unset_jwt_cookies(resp)
-        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
         logout_user()
         return resp
 
@@ -282,7 +271,7 @@ class DBAuth:
                 user.failed_sign_in_count = 0
                 db_session.commit()
 
-                target_url = session.pop('target_url', '/')
+                target_url = session.pop('target_url', self.tenant_prefix())
                 self.clear_verify_session()
                 return self.__login_response(user, target_url)
             else:
@@ -606,7 +595,6 @@ class DBAuth:
 
     def __login_response(self, user, target_url):
         self.logger.info("Logging in as user '%s'" % user.name)
-        self.app.config['SESSION_COOKIE_PATH'] = self.tenant_prefix()
         # flask_login stores user in session
         login_user(user)
 
@@ -617,7 +605,6 @@ class DBAuth:
         resp = make_response(redirect(target_url))
         # Set the JWTs and the CSRF double submit protection cookies
         # in this response
-        self.app.config['JWT_ACCESS_COOKIE_PATH'] = self.tenant_prefix()
         set_access_cookies(resp, access_token)
 
         return resp

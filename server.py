@@ -1,14 +1,16 @@
 import logging
 import os
+import re
 
 from flask import Flask, request, jsonify
+from flask.sessions import SecureCookieSessionInterface
 from flask_login import LoginManager
 from flask_jwt_extended import jwt_required, jwt_optional
 from flask_mail import Mail
 
 from qwc_services_core.jwt import jwt_manager
 from qwc_services_core.tenant_handler import (
-    TenantHandler, TenantPrefixMiddleware)
+    TenantHandler, TenantPrefixMiddleware, DEFAULT_TENANT)
 from db_auth import DBAuth
 
 
@@ -50,9 +52,41 @@ mail = Mail(app)
 tenant_handler = TenantHandler(app.logger)
 
 
+class TenantSessionInterface(SecureCookieSessionInterface):
+    def __init__(self, environ):
+        super().__init__()
+        self.tenant_name = environ.get('QWC_TENANT')
+        self.tenant_header = environ.get('TENANT_HEADER')
+        self.tenant_url_re = environ.get('TENANT_URL_RE')
+        if self.tenant_url_re:
+            self.tenant_url_re = re.compile(self.tenant_url_re)
+
+    def tenant(self):
+        if self.tenant_name:
+            return self.tenant_name
+        if self.tenant_header:
+            return request.headers.get(self.tenant_header, DEFAULT_TENANT)
+        if self.tenant_url_re:
+            match = self.tenant_url_re.match(request.base_url)
+            if match:
+                return match.group(1)
+            else:
+                return DEFAULT_TENANT
+        return DEFAULT_TENANT
+
+    def get_cookie_path(self, app):
+        prefix = '/' + self.tenant()
+        # Set config as a side effect
+        app.config['JWT_ACCESS_COOKIE_PATH'] = prefix
+        return prefix
+
+
 if os.environ.get('TENANT_HEADER'):
     app.wsgi_app = TenantPrefixMiddleware(
         app.wsgi_app, os.environ.get('TENANT_HEADER'))
+
+if os.environ.get('TENANT_HEADER') or os.environ.get('TENANT_URL_RE'):
+    app.session_interface = TenantSessionInterface(os.environ)
 
 
 def db_auth_handler():
