@@ -83,7 +83,7 @@ class DBAuth:
     def tenant_prefix(self):
         """URL prefix for tentant"""
         # TenantSessionInterface updates config['JWT_ACCESS_COOKIE_PATH']
-        return self.app.config.get('JWT_ACCESS_COOKIE_PATH', '/')
+        return self.app.config.get('JWT_ACCESS_COOKIE_PATH', '') + '/'
 
     def login(self):
         """Authorize user and sign in."""
