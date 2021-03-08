@@ -15,14 +15,11 @@ from db_auth import DBAuth
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get(
-        'JWT_SECRET_KEY',
-        'CHANGE-ME-1ef43ade8807dc37a6588cb8fb9dec4caf6dfd0e00398f9a')
+jwt = jwt_manager(app)
+app.secret_key = app.config['JWT_SECRET_KEY']
 
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
-
-jwt = jwt_manager(app)
 
 session_query = None
 
@@ -50,13 +47,8 @@ mail = Mail(app)
 
 tenant_handler = TenantHandler(app.logger)
 
-
-if os.environ.get('TENANT_HEADER'):
-    app.wsgi_app = TenantPrefixMiddleware(
-        app.wsgi_app, os.environ.get('TENANT_HEADER'))
-
-if os.environ.get('TENANT_HEADER') or os.environ.get('TENANT_URL_RE'):
-    app.session_interface = TenantSessionInterface(os.environ)
+app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
+app.session_interface = TenantSessionInterface(os.environ)
 
 
 def db_auth_handler():
