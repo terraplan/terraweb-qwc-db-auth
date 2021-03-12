@@ -82,8 +82,8 @@ class DBAuth:
 
     def tenant_prefix(self):
         """URL prefix for tentant"""
-        # TenantSessionInterface updates config['JWT_ACCESS_COOKIE_PATH']
-        return self.app.config.get('JWT_ACCESS_COOKIE_PATH', '') + '/'
+        # Updates config['JWT_ACCESS_COOKIE_PATH'] as side effect
+        return self.app.session_interface.get_cookie_path(self.app)
 
     def login(self):
         """Authorize user and sign in."""
@@ -219,8 +219,8 @@ class DBAuth:
 
     def logout(self):
         """Sign out."""
-        self.clear_verify_session()
         target_url = request.args.get('url', self.tenant_prefix())
+        self.clear_verify_session()
         resp = make_response(redirect(target_url))
         unset_jwt_cookies(resp)
         logout_user()
