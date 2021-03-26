@@ -87,8 +87,8 @@ class DBAuth:
 
     def login(self):
         """Authorize user and sign in."""
-        target_url = request.args.get('url', self.tenant_prefix())
-        retry_target_url = request.args.get('url', None)
+        target_url = url_path(request.args.get('url', self.tenant_prefix()))
+        retry_target_url = url_path(request.args.get('url', None))
 
         if POST_PARAM_LOGIN:
             # Pass additional parameter specified
@@ -219,7 +219,7 @@ class DBAuth:
 
     def logout(self):
         """Sign out."""
-        target_url = request.args.get('url', self.tenant_prefix())
+        target_url = url_path(request.args.get('url', self.tenant_prefix()))
         self.clear_verify_session()
         resp = make_response(redirect(target_url))
         unset_jwt_cookies(resp)
@@ -647,3 +647,10 @@ class DBAuth:
         # send message
         self.logger.debug(msg)
         self.mail.send(msg)
+
+
+def url_path(url):
+    """ Extract path and query parameters from URL """
+    o = urlparse(url)
+    parts = list(filter(None, [o.path, o.query]))
+    return '?'.join(parts)
