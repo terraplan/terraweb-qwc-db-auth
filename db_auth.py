@@ -5,7 +5,7 @@ import os
 from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
 
 from flask import abort, flash, make_response, redirect, render_template, \
-    request, Response, session, url_for
+    request, Response, session, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user
 from flask_jwt_extended import create_access_token, create_refresh_token, \
     set_access_cookies, unset_jwt_cookies
@@ -170,6 +170,10 @@ class DBAuth:
                     redirect(url_for('login', url=retry_target_url)),
                     db_session
                 )
+        else:
+            if len(get_flashed_messages()) == 0:
+                # e.g. CSRF timeout
+                flash('Form validation error')
 
         return self.response(
             render_template('login.html', title='Sign In', form=form),
