@@ -126,54 +126,58 @@ class DBAuth:
                     )
 
         form = LoginForm()
-        if form.validate_on_submit():
-            user = self.find_user(db_session, name=form.username.data)
+        if form.is_submitted():
+            if form.validate():
+                user = self.find_user(db_session, name=form.username.data)
 
-            # force password change on first sign in of default admin user
-            # NOTE: user.last_sign_in_at will be set after successful auth
-            force_password_change = (
-                user and user.name == self.DEFAULT_ADMIN_USER
-                and user.last_sign_in_at is None
-            )
+                # force password change on first sign in of default admin user
+                # NOTE: user.last_sign_in_at will be set after successful auth
+                force_password_change = (
+                    user and user.name == self.DEFAULT_ADMIN_USER
+                    and user.last_sign_in_at is None
+                )
 
-            if self.__user_is_authorized(user, form.password.data, db_session):
-                if not force_password_change:
-                    if TOTP_ENABLED:
-                        session['login_uid'] = user.id
-                        session['target_url'] = target_url
-                        if user.totp_secret:
-                            # show form for verification token
-                            return self.response(
-                                 self.__verify(db_session, False), db_session
-                            )
+                if self.__user_is_authorized(user, form.password.data,
+                                             db_session):
+                    if not force_password_change:
+                        if TOTP_ENABLED:
+                            session['login_uid'] = user.id
+                            session['target_url'] = target_url
+                            if user.totp_secret:
+                                # show form for verification token
+                                return self.response(
+                                     self.__verify(db_session, False),
+                                     db_session
+                                )
+                            else:
+                                # show form for TOTP setup on first sign in
+                                return self.response(
+                                    self.__setup_totp(db_session, False),
+                                    db_session
+                                )
                         else:
-                            # show form for TOTP setup on first sign in
+                            # login successful
                             return self.response(
-                                self.__setup_totp(db_session, False),
+                                self.__login_response(user, target_url),
                                 db_session
                             )
                     else:
-                        # login successful
                         return self.response(
-                            self.__login_response(user, target_url), db_session
+                            self.require_password_change(
+                                user, target_url, db_session
+                            ),
+                            db_session
                         )
                 else:
+                    flash('Invalid username or password')
                     return self.response(
-                        self.require_password_change(
-                            user, target_url, db_session
-                        ),
+                        redirect(url_for('login', url=retry_target_url)),
                         db_session
                     )
             else:
-                flash('Invalid username or password')
-                return self.response(
-                    redirect(url_for('login', url=retry_target_url)),
-                    db_session
-                )
-        else:
-            if len(get_flashed_messages()) == 0:
-                # e.g. CSRF timeout
-                flash('Form validation error')
+                if len(get_flashed_messages()) == 0:
+                    # e.g. CSRF timeout
+                    flash('Form validation error')
 
         return self.response(
             render_template('login.html', title='Sign In', form=form),
