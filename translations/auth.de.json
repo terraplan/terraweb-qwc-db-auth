@@ -2,38 +2,38 @@
   "de": {
     "login_page_title": "Anmeldung",
     "login_form_title": "Login",
-    "login_button": "Log in",
-    "username_placeholder": "Username",
+    "login_button": "Anmelden",
+    "username_placeholder": "Benutzername",
     "password_placeholder": "Passwort",
     "forgot_password": "Passwort vergessen?",
-    "auth_failed": "Ungültiger Username oder Passwort",
-    "validation_error": "Formularvalidierung fehlgeschlagen",
+    "auth_failed": "Ungültiger Benutzername oder ungültiges Passwort",
+    "validation_error": "Überprüfung des Formulars fehlgeschlagen",
 
-    "login_link": "Login",
+    "login_link": "Anmeldung",
 
     "new_password_page_title": "Passwort vergessen?",
-    "new_password_form_title": "Instruktionen für Passwort-Zurücksetzung",
-    "new_password_button": "Senden",
-    "email_placeholder": "Email",
+    "new_password_form_title": "Anweisungen zum Zurücksetzen des Passworts senden",
+    "new_password_button": "Anweisungen senden",
+    "email_placeholder": "E-Mail",
 
-    "auth.reset_mail_subject": "Reset password instructions",
+    "auth.reset_mail_subject": "Anweisungen zum Zurücksetzen des Passworts",
 
-    "verfication_invalid": "Invalid verification code",
+    "verfication_invalid": "Ungültiger Verifizierungscode",
 
-    "edit_password_page_title": "Change your password",
-    "edit_password_button": "Change my password",
-    "new_password_placeholder": "New password",
-    "new_password_confirm_placeholder": "Confirm new password",
+    "edit_password_page_title": "Passwort ändern",
+    "edit_password_button": "ändern",
+    "new_password_placeholder": "Neues Passwort",
+    "new_password_confirm_placeholder": "Neues Passwort bestätigen",
 
-    "qrcode_page_title": "Two Factor Authentication Setup",
-    "qrcode_line1": "Scan the following QR code with your OTP app",
-    "qrcode_line2": "(e.g. FreeOTP or Google Authenticator)",
+    "qrcode_page_title": "Einrichtung der Zwei-Faktor-Authentifizierung",
+    "qrcode_line1": "Scannen Sie den folgenden QR-Code mit Ihrer OTP-App",
+    "qrcode_line2": "(z.B. FreeOTP oder Google Authenticator)",
     "qrcode_secret": "Secret",
-    "qrcode_code_placeholder": "Confirm verification code",
-    "qrcode_button": "Confirm",
+    "qrcode_code_placeholder": "Verifizierungscode bestätigen",
+    "qrcode_button": "bestätigen",
 
-    "verify_page_title": "Sign In",
-    "verify_form_title": "Enter your verification code",
-    "verify_code_placeholder": "Verification code"
+    "verify_page_title": "Anmeldung",
+    "verify_form_title": "Geben Sie Ihren Verifizierungscode ein",
+    "verify_code_placeholder": "Verifizierungscode"
   }
 }
