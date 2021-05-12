@@ -127,57 +127,53 @@ class DBAuth:
                     )
 
         form = LoginForm()
-        if form.is_submitted():
-            if form.validate():
-                user = self.find_user(db_session, name=form.username.data)
+        if form.validate_on_submit():
+            user = self.find_user(db_session, name=form.username.data)
 
-                # force password change on first sign in of default admin user
-                # NOTE: user.last_sign_in_at will be set after successful auth
-                force_password_change = (
-                    user and user.name == self.DEFAULT_ADMIN_USER
-                    and user.last_sign_in_at is None
-                )
+            # force password change on first sign in of default admin user
+            # NOTE: user.last_sign_in_at will be set after successful auth
+            force_password_change = (
+                user and user.name == self.DEFAULT_ADMIN_USER
+                and user.last_sign_in_at is None
+            )
 
-                if self.__user_is_authorized(user, form.password.data,
-                                             db_session):
-                    if not force_password_change:
-                        if TOTP_ENABLED:
-                            session['login_uid'] = user.id
-                            session['target_url'] = target_url
-                            if user.totp_secret:
-                                # show form for verification token
-                                return self.response(
-                                     self.__verify(db_session, False),
-                                     db_session
-                                )
-                            else:
-                                # show form for TOTP setup on first sign in
-                                return self.response(
-                                    self.__setup_totp(db_session, False),
-                                    db_session
-                                )
-                        else:
-                            # login successful
+            if self.__user_is_authorized(user, form.password.data,
+                                         db_session):
+                if not force_password_change:
+                    if TOTP_ENABLED:
+                        session['login_uid'] = user.id
+                        session['target_url'] = target_url
+                        if user.totp_secret:
+                            # show form for verification token
                             return self.response(
-                                self.__login_response(user, target_url),
+                                 self.__verify(db_session, False),
+                                 db_session
+                            )
+                        else:
+                            # show form for TOTP setup on first sign in
+                            return self.response(
+                                self.__setup_totp(db_session, False),
                                 db_session
                             )
                     else:
+                        # login successful
                         return self.response(
-                            self.require_password_change(
-                                user, target_url, db_session
-                            ),
+                            self.__login_response(user, target_url),
                             db_session
                         )
                 else:
-                    flash(i18n.t('auth.auth_failed'))
                     return self.response(
-                        redirect(url_for('login', url=retry_target_url)),
+                        self.require_password_change(
+                            user, target_url, db_session
+                        ),
                         db_session
                     )
             else:
-                # e.g. CSRF timeout
-                flash(i18n.t('auth.validation_error'))
+                flash(i18n.t('auth.auth_failed'))
+                return self.response(
+                    redirect(url_for('login', url=retry_target_url)),
+                    db_session
+                )
 
         return self.response(
             render_template('login.html', form=form, i18n=i18n,
