@@ -20,6 +20,9 @@ body {
 .totp-setup {
   width: 450px;
 }
+.verify {
+  width: 450px;
+}
 .login-screen {
   background-color: #FFF;
   padding: 20px;
