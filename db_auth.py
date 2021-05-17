@@ -126,7 +126,7 @@ class DBAuth:
                         db_session
                     )
 
-        form = LoginForm()
+        form = LoginForm(meta=wft_locales())
         if form.validate_on_submit():
             user = self.find_user(db_session, name=form.username.data)
 
@@ -204,7 +204,7 @@ class DBAuth:
             # user not found
             return redirect(url_for('login'))
 
-        form = VerifyForm()
+        form = VerifyForm(meta=wft_locales())
         if submit and form.validate_on_submit():
             if self.user_totp_is_valid(user, form.token.data, db_session):
                 # TOTP verified
@@ -262,7 +262,7 @@ class DBAuth:
             # store temp secret in session
             session['totp_secret'] = totp_secret
 
-        form = VerifyForm()
+        form = VerifyForm(meta=wft_locales())
         if submit and form.validate_on_submit():
             if pyotp.totp.TOTP(totp_secret).verify(
                 form.token.data, valid_window=1
@@ -358,7 +358,7 @@ class DBAuth:
 
     def new_password(self):
         """Show form and send reset password instructions."""
-        form = NewPasswordForm()
+        form = NewPasswordForm(meta=wft_locales())
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -406,7 +406,7 @@ class DBAuth:
 
         :param str: Password reset token
         """
-        form = self.edit_password_form()
+        form = self.edit_password_form(meta=wft_locales())
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -463,7 +463,7 @@ class DBAuth:
         db_session.commit()
 
         # show password reset form
-        form = self.edit_password_form()
+        form = self.edit_password_form(meta=wft_locales())
         # set hidden field
         form.reset_password_token.data = user.reset_password_token
 
@@ -658,6 +658,10 @@ class DBAuth:
         # send message
         self.logger.debug(msg)
         self.mail.send(msg)
+
+
+def wft_locales():
+    return {'locales': [i18n.get('locale')]}
 
 
 def url_path(url):

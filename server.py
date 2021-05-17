@@ -28,6 +28,9 @@ app.secret_key = app.config['JWT_SECRET_KEY']
 
 i18n.set('load_path', ['./translations'])
 SUPPORTED_LANGUAGES = ['en', 'de']
+# *Enable* WTForms built-in messages translation
+# https://wtforms.readthedocs.io/en/2.3.x/i18n/
+app.config['WTF_I18N_ENABLED'] = False
 
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
