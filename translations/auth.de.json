@@ -16,7 +16,9 @@
     "new_password_button": "Anweisungen senden",
     "email_placeholder": "E-Mail",
 
-    "auth.reset_mail_subject": "Anweisungen zum Zurücksetzen des Passworts",
+    "reset_message": "Sie erhalten ein E-Mail mit den Anweisungen zum Zurücksetzen des Passworts in ein paar Minuten",
+    "reset_mail_subject": "Anweisungen zum Zurücksetzen des Passworts",
+    "reset_mail_failed": "Senden der Anweisungen zum Zurücksetzen des Passworts fehlgeschlagen",
 
     "verfication_invalid": "Ungültiger Verifizierungscode",
 
@@ -24,6 +26,10 @@
     "edit_password_button": "ändern",
     "new_password_placeholder": "Neues Passwort",
     "new_password_confirm_placeholder": "Neues Passwort bestätigen",
+
+    "edit_password_message": "Bitte wählen Sie ein neues Passwort",
+    "edit_password_successful": "Passwort wurde erfolgreich geändert",
+    "edit_password_invalid_token": "Ungültiges Token zum Zurücksetzen des Passworts",
 
     "qrcode_page_title": "Einrichtung der Zwei-Faktor-Authentifizierung",
     "qrcode_line1": "Scannen Sie den folgenden QR-Code mit Ihrer OTP-App",

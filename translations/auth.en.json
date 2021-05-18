@@ -16,7 +16,9 @@
     "new_password_button": "Send instructions",
     "email_placeholder": "Email",
 
-    "auth.reset_mail_subject": "Reset password instructions",
+    "reset_message": "You will receive an email with instructions on how to reset your password in a few minutes.",
+    "reset_mail_subject": "Reset password instructions",
+    "reset_mail_failed": "Failed to send reset password instructions",
 
     "verfication_invalid": "Invalid verification code",
 
@@ -24,6 +26,10 @@
     "edit_password_button": "Change my password",
     "new_password_placeholder": "New password",
     "new_password_confirm_placeholder": "Confirm new password",
+
+    "edit_password_message": "Please choose a new password",
+    "edit_password_successful": "Your password was changed successfully",
+    "edit_password_invalid_token": "Reset password token is invalid",
 
     "qrcode_page_title": "Two Factor Authentication Setup",
     "qrcode_line1": "Scan the following QR code with your OTP app",

@@ -376,7 +376,7 @@ class DBAuth:
                         "Could not send reset password instructions to "
                         "user '%s':\n%s" % (user.email, e)
                     )
-                    flash("Failed to send reset password instructions")
+                    flash(i18n.t("auth.reset_mail_failed"))
                     return self.response(
                         render_template(
                             'new_password.html', form=form, i18n=i18n,
@@ -386,10 +386,7 @@ class DBAuth:
                     )
 
             # NOTE: show message anyway even if email not found
-            flash(
-                "You will receive an email with instructions on how to reset "
-                "your password in a few minutes."
-            )
+            flash(i18n.t("auth.reset_message"))
             return self.response(
                 redirect(url_for('login')),
                 db_session
@@ -424,13 +421,13 @@ class DBAuth:
                     user.last_sign_in_at = datetime.utcnow()
                 db_session.commit()
 
-                flash("Your password was changed successfully.")
+                flash(i18n.t("auth.edit_password_successful"))
                 return self.response(
                     redirect(url_for('login')), db_session
                 )
             else:
                 # invalid reset token
-                flash("Reset password token is invalid")
+                flash(i18n.t("auth.edit_password_invalid_token"))
                 return self.response(
                     render_template(
                         'edit_password.html', form=form, i18n=i18n,
@@ -466,7 +463,7 @@ class DBAuth:
         # set hidden field
         form.reset_password_token.data = user.reset_password_token
 
-        flash("Please choose a new password")
+        flash(i18n.t('auth.edit_password_message'))
         return render_template(
             'edit_password.html', form=form, i18n=i18n,
             title=i18n.t("auth.edit_password_page_title")
