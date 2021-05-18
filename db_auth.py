@@ -169,11 +169,10 @@ class DBAuth:
                         db_session
                     )
             else:
-                flash(i18n.t('auth.auth_failed'))
-                return self.response(
-                    redirect(url_for('login', url=retry_target_url)),
-                    db_session
-                )
+                form.username.errors.append(i18n.t('auth.auth_failed'))
+                form.password.errors.append(i18n.t('auth.auth_failed'))
+                # Maybe different message when
+                # user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS
 
         return self.response(
             render_template('login.html', form=form, i18n=i18n,

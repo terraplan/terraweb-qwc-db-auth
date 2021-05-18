@@ -132,7 +132,7 @@ def healthz():
 @app.before_request
 def set_lang():
     i18n.set('locale',
-             request.accept_languages.best_match(SUPPORTED_LANGUAGES))
+             request.accept_languages.best_match(SUPPORTED_LANGUAGES) or 'en')
 
 
 if __name__ == '__main__':
