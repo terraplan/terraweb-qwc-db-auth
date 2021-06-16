@@ -1,0 +1,45 @@
+{
+  "fr": {
+    "login_page_title": "Authentification",
+    "login_form_title": "Connexion",
+    "login_button": "Se connecter",
+    "username_placeholder": "identifiant",
+    "password_placeholder": "mot de passe",
+    "forgot_password": "Mot de passe oublié?",
+    "auth_failed": "Identifiant ou mot de passe invalide",
+    "validation_error": "Erreur dans le formulaire",
+
+    "login_link": "Se connecter",
+
+    "new_password_page_title": "Mot de passe oublié?",
+    "new_password_form_title": "Envoyer les instructions pour réinitialiser mon mot de passe",
+    "new_password_button": "Envoyer",
+    "email_placeholder": "Email",
+
+    "reset_message": "Vous allez recevoir par mail les instructions pour réinitialiser votre mot de passe.",
+    "reset_mail_subject": "Réinitialisation de votre mot de passe",
+    "reset_mail_failed": "Echec dans l'envoi des instructions de réinitialisation du mot de passe",
+
+    "verfication_invalid": "Code de vérification invalide",
+
+    "edit_password_page_title": "Changez votre mot de passe",
+    "edit_password_button": "Appliquer mon nouveau mot de passe",
+    "new_password_placeholder": "Nouveau mot de passe",
+    "new_password_confirm_placeholder": "Confirmer le nouveau mot de passe",
+
+    "edit_password_message": "Choisissez un nouveau mot de passe",
+    "edit_password_successful": "Votre mot de passe a été changé",
+    "edit_password_invalid_token": "Le jeton de réinitialisation du mot de passe est invalide",
+
+    "qrcode_page_title": "Configuration de l'authentification Deux-Facteurs",
+    "qrcode_line1": "Scannez le QR code avec votre application",
+    "qrcode_line2": "(par exemple FreeOTP ou Google Authenticator)",
+    "qrcode_secret": "Secret",
+    "qrcode_code_placeholder": "Code de vérification",
+    "qrcode_button": "Confirmer",
+
+    "verify_page_title": "Se connecter",
+    "verify_form_title": "Entrez votre code de vérification",
+    "verify_code_placeholder": "Code de vérification"
+  }
+}
