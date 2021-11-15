@@ -22,6 +22,7 @@ class NewPasswordForm(FlaskForm):
 
 class EditPasswordForm(FlaskForm):
     reset_password_token = HiddenField(validators=[Optional()])
+    url = HiddenField(validators=[Optional()])
     password = PasswordField(
         'New password'
     )

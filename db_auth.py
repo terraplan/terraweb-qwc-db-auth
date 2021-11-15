@@ -2,7 +2,7 @@ import base64
 from datetime import datetime
 from io import BytesIO
 import os
-from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
+from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse, unquote
 
 from flask import abort, flash, make_response, redirect, render_template, \
     request, Response, session, url_for, get_flashed_messages
@@ -81,14 +81,15 @@ class DBAuth:
         self.config_models = ConfigModels(db_engine, db_url)
         self.User = self.config_models.model('users')
 
-    def tenant_prefix(self):
-        """URL prefix for tentant"""
+    def tenant_base(self):
+        """base path for tentant"""
         # Updates config['JWT_ACCESS_COOKIE_PATH'] as side effect
-        return self.app.session_interface.get_cookie_path(self.app)
+        prefix = self.app.session_interface.get_cookie_path(self.app)
+        return prefix.rstrip('/') + '/'
 
     def login(self):
         """Authorize user and sign in."""
-        target_url = url_path(request.args.get('url', self.tenant_prefix()))
+        target_url = url_path(request.args.get('url', self.tenant_base()))
         retry_target_url = url_path(request.args.get('url', None))
 
         if POST_PARAM_LOGIN:
@@ -207,7 +208,7 @@ class DBAuth:
         if submit and form.validate_on_submit():
             if self.user_totp_is_valid(user, form.token.data, db_session):
                 # TOTP verified
-                target_url = session.pop('target_url', self.tenant_prefix())
+                target_url = session.pop('target_url', self.tenant_base())
                 self.clear_verify_session()
                 return self.__login_response(user, target_url)
             else:
@@ -224,7 +225,7 @@ class DBAuth:
 
     def logout(self):
         """Sign out."""
-        target_url = url_path(request.args.get('url', self.tenant_prefix()))
+        target_url = url_path(request.args.get('url', self.tenant_base()))
         self.clear_verify_session()
         resp = make_response(redirect(target_url))
         unset_jwt_cookies(resp)
@@ -276,7 +277,7 @@ class DBAuth:
                 user.failed_sign_in_count = 0
                 db_session.commit()
 
-                target_url = session.pop('target_url', self.tenant_prefix())
+                target_url = session.pop('target_url', self.tenant_base())
                 self.clear_verify_session()
                 return self.__login_response(user, target_url)
             else:
@@ -422,8 +423,10 @@ class DBAuth:
                 db_session.commit()
 
                 flash(i18n.t("auth.edit_password_successful"))
+                target_url = unquote(form.url.data)
                 return self.response(
-                    redirect(url_for('login')), db_session
+                    redirect(url_for('login', url=target_url)),
+                    db_session
                 )
             else:
                 # invalid reset token
@@ -460,8 +463,9 @@ class DBAuth:
 
         # show password reset form
         form = self.edit_password_form()
-        # set hidden field
+        # set hidden fields
         form.reset_password_token.data = user.reset_password_token
+        form.url.data = target_url
 
         flash(i18n.t('auth.edit_password_message'))
         return render_template(
