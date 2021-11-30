@@ -425,7 +425,7 @@ class DBAuth:
                 flash(i18n.t("auth.edit_password_successful"))
                 target_url = unquote(form.url.data)
                 return self.response(
-                    redirect(url_for('login', url=target_url)),
+                    self.__login_response(user, target_url),
                     db_session
                 )
             else:
