@@ -89,8 +89,9 @@ class DBAuth:
 
     def login(self):
         """Authorize user and sign in."""
-        target_url = url_path(request.args.get('url', self.tenant_base()))
-        retry_target_url = url_path(request.args.get('url', None))
+        target_url = url_path(request.args.get('url') or self.tenant_base())
+        retry_target_url = url_path(request.args.get('url') or None)
+        self.logger.debug("Login with target_url `%s`" % target_url)
 
         if POST_PARAM_LOGIN:
             # Pass additional parameter specified
@@ -103,7 +104,7 @@ class DBAuth:
             target_query = dict(parse_qsl(parts.query))
             target_query.update(queryvals)
             parts = parts._replace(query=urlencode(target_query))
-            target_url = urlunparse(parts)
+            target_url = urlunparse(parts) or None
 
         self.clear_verify_session()
 
@@ -385,6 +386,8 @@ class DBAuth:
                         ),
                         db_session
                     )
+            else:
+                self.logger.info("User lookup failed")
 
             # NOTE: show message anyway even if email not found
             flash(i18n.t("auth.reset_message"))
@@ -423,9 +426,9 @@ class DBAuth:
                 db_session.commit()
 
                 flash(i18n.t("auth.edit_password_successful"))
-                target_url = unquote(form.url.data)
+                target_url = unquote(form.url.data) or None
                 return self.response(
-                    self.__login_response(user, target_url),
+                    redirect(url_for('login', url=target_url)),
                     db_session
                 )
             else:
