@@ -27,6 +27,7 @@ jwt = auth_manager(app)
 app.secret_key = app.config['JWT_SECRET_KEY']
 
 i18n.set('load_path', [os.path.join(os.path.dirname(__file__), 'translations')])
+i18n.set('file_format', 'json')
 SUPPORTED_LANGUAGES = ['en', 'de', 'fr']
 # *Enable* WTForms built-in messages translation
 # https://wtforms.readthedocs.io/en/2.3.x/i18n/
