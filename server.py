@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required
 from flask_mail import Mail
 import i18n
 
-from qwc_services_core.auth import auth_manager
+from qwc_services_core.auth import auth_manager, optional_auth, get_identity
 from qwc_services_core.tenant_handler import (
     TenantHandler, TenantPrefixMiddleware, TenantSessionInterface)
 from db_auth import DBAuth
@@ -93,9 +93,9 @@ def verify():
 
 
 @app.route('/logout', methods=['GET', 'POST'])
-@jwt_required()
+@optional_auth
 def logout():
-    return db_auth_handler().logout()
+    return db_auth_handler().logout(get_identity())
 
 
 @app.route('/totp', methods=['POST'])

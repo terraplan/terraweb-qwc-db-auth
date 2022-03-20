@@ -224,13 +224,14 @@ class DBAuth:
         return render_template('verify.html', form=form, i18n=i18n,
                                title=i18n.t("auth.verify_page_title"))
 
-    def logout(self):
+    def logout(self, identity):
         """Sign out."""
         target_url = url_path(request.args.get('url', self.tenant_base()))
         self.clear_verify_session()
         resp = make_response(redirect(target_url))
-        unset_jwt_cookies(resp)
-        logout_user()
+        if identity:
+            unset_jwt_cookies(resp)
+            logout_user()
         return resp
 
     def setup_totp(self):
