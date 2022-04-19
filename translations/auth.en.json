@@ -27,9 +27,13 @@
     "new_password_placeholder": "New password",
     "new_password_confirm_placeholder": "Confirm new password",
 
+    "edit_password_reason_first_login": "First login",
+    "edit_password_reason_expired": "Your password has expired",
     "edit_password_message": "Please choose a new password",
     "edit_password_successful": "Your password was changed successfully",
     "edit_password_invalid_token": "Reset password token is invalid",
+    "edit_password_cannot_reuse": "This password has already been used for your account",
+    "edit_password_rate_limited": "You must wait longer to change your password",
 
     "qrcode_page_title": "Two Factor Authentication Setup",
     "qrcode_line1": "Scan the following QR code with your OTP app",

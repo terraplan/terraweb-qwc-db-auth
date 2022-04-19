@@ -46,6 +46,18 @@
         "password_constraints_message": {
           "description": "Validation message if password constraints are not met",
           "type": "string"
+        },
+        "password_expiry": {
+          "description": "Number of days until password expires, or -1 to disable",
+          "type": "integer"
+        },
+        "password_update_interval": {
+          "description": "Min number of seconds before password may be changed again, or -1 to disable",
+          "type": "integer"
+        },
+        "password_allow_reuse": {
+          "description": "Set whether previous passwords may be reused or not",
+          "type": "boolean"
         }
       },
       "required": [

@@ -27,9 +27,13 @@
     "new_password_placeholder": "Neues Passwort",
     "new_password_confirm_placeholder": "Neues Passwort bestätigen",
 
+    "edit_password_reason_first_login": "Erste Anmeldung",
+    "edit_password_reason_expired": "Ihr Passwort ist abgelaufen",
     "edit_password_message": "Bitte wählen Sie ein neues Passwort",
     "edit_password_successful": "Passwort wurde erfolgreich geändert",
     "edit_password_invalid_token": "Ungültiges Token zum Zurücksetzen des Passworts",
+    "edit_password_cannot_reuse": "Dieses Passwort wurde für Ihr Benutzerkonto schon einmal benutzt",
+    "edit_password_rate_limited": "Sie können Ihr Passwort noch nicht ändern",
 
     "qrcode_page_title": "Einrichtung der Zwei-Faktor-Authentifizierung",
     "qrcode_line1": "Scannen Sie den folgenden QR-Code mit Ihrer OTP-App",

@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import os
 from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse, unquote
@@ -13,6 +13,7 @@ from flask_mail import Message
 import pyotp
 import qrcode
 import i18n
+from werkzeug.security import check_password_hash
 
 from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.config_models import ConfigModels
@@ -48,6 +49,10 @@ class DBAuth:
     USERNAME = 'username'
     PASSWORD = 'password'
 
+    # reasons requiring password change
+    PASSWORD_CHANGE_REASON_FIRST_LOGIN = 'first_login'
+    PASSWORD_CHANGE_REASON_EXPIRED = 'expired'
+
     def __init__(self, tenant, mail, app):
         """Constructor
 
@@ -74,12 +79,31 @@ class DBAuth:
             'constraints_message': config.get(
                 'password_constraints_message',
                 "Password does not match constraints"
-            )
+            ),
+            'expiry': config.get('password_expiry', -1),
+            'update_interval': config.get('password_update_interval', -1),
+            'allow_reuse': config.get('password_allow_reuse', True)
         }
 
         db_engine = DatabaseEngine()
-        self.config_models = ConfigModels(db_engine, db_url)
+        self.config_models = ConfigModels(
+            db_engine, db_url, ['password_histories']
+        )
         self.User = self.config_models.model('users')
+        self.PasswordHistory = self.config_models.model('password_histories')
+
+        # toggle password history according to config settings
+        self.password_history_active = (
+            self.password_constraints['expiry'] != -1 or
+            self.password_constraints['update_interval'] != -1 or
+            not self.password_constraints['allow_reuse']
+        )
+        if self.password_history_active and self.PasswordHistory is None:
+            self.logger.warning(
+                "Could not activate password history. "
+                "Table 'qwc_config.password_histories' is missing."
+            )
+            self.password_history_active = False
 
     def tenant_base(self):
         """base path for tentant"""
@@ -139,9 +163,23 @@ class DBAuth:
                 and user.last_sign_in_at is None
             )
 
+            # check if password has expired
+            password_has_expired = self.password_has_expired(db_session, user)
+            if password_has_expired:
+                force_password_change = True
+
             if self.__user_is_authorized(user, form.password.data,
                                          db_session):
                 if not force_password_change:
+                    if self.password_history_active:
+                        # check if any password history is present
+                        pw_history = self.find_latest_password_history(
+                            db_session, user=user
+                        )
+                        if pw_history is None:
+                            # add initial password history entry if missing
+                            self.create_password_history(db_session, user)
+
                     if TOTP_ENABLED:
                         session['login_uid'] = user.id
                         session['target_url'] = target_url
@@ -164,9 +202,20 @@ class DBAuth:
                             db_session
                         )
                 else:
+                    if password_has_expired:
+                        self.logger.info(
+                            "Force password change on expired password"
+                        )
+                        reason = self.PASSWORD_CHANGE_REASON_EXPIRED
+                    else:
+                        self.logger.info(
+                            "Force password change on first login"
+                        )
+                        reason = self.PASSWORD_CHANGE_REASON_FIRST_LOGIN
+
                     return self.response(
                         self.require_password_change(
-                            user, target_url, db_session
+                            user, reason, target_url, db_session
                         ),
                         db_session
                     )
@@ -416,6 +465,37 @@ class DBAuth:
                 db_session, reset_password_token=form.reset_password_token.data
             )
             if user:
+                if not self.can_change_password(db_session, user):
+                    # time since last password update was too short
+                    flash(i18n.t("auth.edit_password_rate_limited"))
+                    target_url = unquote(form.url.data) or None
+                    return self.response(
+                        redirect(url_for('login', url=target_url)),
+                        db_session
+                    )
+
+                if not self.password_accepted(
+                    db_session, user, form.password.data
+                ):
+                    # password may not be reused
+
+                    # show message in form
+                    form.password.errors.append(
+                        i18n.t('auth.edit_password_cannot_reuse')
+                    )
+
+                    if token:
+                        # set hidden field
+                        form.reset_password_token.data = token
+
+                    return self.response(
+                        render_template(
+                            'edit_password.html', form=form, i18n=i18n,
+                            title=i18n.t("auth.edit_password_page_title")
+                        ),
+                        db_session
+                    )
+
                 # save new password
                 user.set_password(form.password.data)
                 # clear token
@@ -425,6 +505,9 @@ class DBAuth:
                     # to mark as password changed
                     user.last_sign_in_at = datetime.utcnow()
                 db_session.commit()
+
+                # add new entry to password history
+                self.create_password_history(db_session, user)
 
                 flash(i18n.t("auth.edit_password_successful"))
                 target_url = unquote(form.url.data) or None
@@ -452,10 +535,11 @@ class DBAuth:
             title=i18n.t("auth.edit_password_page_title")
         )
 
-    def require_password_change(self, user, target_url, db_session):
+    def require_password_change(self, user, reason, target_url, db_session):
         """Show form for required password change.
 
         :param User user: User instance
+        :param str reason: Reason for this required password change
         :param str target_url: URL for redirect
         :param Session db_session: DB session
         """
@@ -470,6 +554,11 @@ class DBAuth:
         # set hidden fields
         form.reset_password_token.data = user.reset_password_token
         form.url.data = target_url
+
+        if reason == self.PASSWORD_CHANGE_REASON_FIRST_LOGIN:
+            flash(i18n.t('auth.edit_password_reason_first_login'))
+        elif reason == self.PASSWORD_CHANGE_REASON_EXPIRED:
+            flash(i18n.t('auth.edit_password_reason_expired'))
 
         flash(i18n.t('auth.edit_password_message'))
         return render_template(
@@ -663,6 +752,108 @@ class DBAuth:
         # send message
         self.logger.debug(msg)
         self.mail.send(msg)
+
+    def find_latest_password_history(self, db_session, **kwargs):
+        """Find latest password history entry by filter.
+
+        :param Session db_session: DB session
+        :param **kwargs: keyword arguments for filter (e.g. user=user)
+        """
+        return db_session.query(self.PasswordHistory). \
+            order_by(self.PasswordHistory.created_at.desc()). \
+            filter_by(**kwargs).first()
+
+    def create_password_history(self, db_session, user):
+        """Create a new password history entry for a user and return it.
+
+        :param Session db_session: DB session
+        :param User user: User instance
+        """
+        pw_history = self.PasswordHistory(
+            user=user,
+            password_hash=user.password_hash,
+            created_at=datetime.utcnow()
+        )
+        db_session.add(pw_history)
+        db_session.commit()
+
+        return pw_history
+
+    def password_has_expired(self, db_session, user):
+        """Return whether a user's password has expired
+        (if password expiry is enabled).
+
+        :param Session db_session: DB session
+        :param User user: User instance
+        """
+        expired = False
+
+        expiry = self.password_constraints['expiry']
+        if self.password_history_active and expiry != -1:
+            # password expiry is enabled
+            pw_history = self.find_latest_password_history(
+                db_session, user=user
+            )
+            if (
+                pw_history and
+                datetime.utcnow() >
+                    pw_history.created_at + timedelta(days=expiry)
+            ):
+                # password has expired
+                expired = True
+
+        return expired
+
+    def can_change_password(self, db_session, user):
+        """Return whether a user may change the password again
+        (if password update interval is set).
+
+        :param Session db_session: DB session
+        :param User user: User instance
+        """
+        allow_change = True
+
+        update_interval = self.password_constraints['update_interval']
+        if self.password_history_active and update_interval != -1:
+            # password update interval is set
+            pw_history = self.find_latest_password_history(
+                db_session, user=user
+            )
+            # check time since last password update
+            if (
+                pw_history and
+                datetime.utcnow() <
+                    pw_history.created_at + timedelta(seconds=update_interval)
+            ):
+                # time since last update was too short
+                allow_change = False
+
+        return allow_change
+
+    def password_accepted(self, db_session, user, new_password):
+        """Return whether a user's new password is accepted
+        (if password reuse is not allowed).
+
+        :param Session db_session: DB session
+        :param User user: User instance
+        :param str password: Password
+        """
+        accepted = True
+
+        allow_reuse = self.password_constraints['allow_reuse']
+        if self.password_history_active and not allow_reuse:
+            # password reuse is not allowed
+            # check password history of user
+            pw_histories = db_session.query(self.PasswordHistory). \
+                order_by('created_at').filter_by(user=user).all()
+            for pw_history in pw_histories:
+                # check new password against hash in history
+                if check_password_hash(pw_history.password_hash, new_password):
+                    # password has already been used
+                    accepted = False
+                    break
+
+        return accepted
 
 
 def wft_locales():

@@ -27,9 +27,13 @@
     "new_password_placeholder": "Nouveau mot de passe",
     "new_password_confirm_placeholder": "Confirmer le nouveau mot de passe",
 
+    "edit_password_reason_first_login": "Première connexion",
+    "edit_password_reason_expired": "Votre mot de passe a expiré",
     "edit_password_message": "Choisissez un nouveau mot de passe",
     "edit_password_successful": "Votre mot de passe a été changé",
     "edit_password_invalid_token": "Le jeton de réinitialisation du mot de passe est invalide",
+    "edit_password_cannot_reuse": "Ce mot de passe est identique à un ancien",
+    "edit_password_rate_limited": "Vous devez attendre plus longtemps afin de pouvoir changer votre mot de passe",
 
     "qrcode_page_title": "Configuration de l'authentification Deux-Facteurs",
     "qrcode_line1": "Scannez le QR code avec votre application",
