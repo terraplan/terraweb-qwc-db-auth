@@ -81,6 +81,7 @@ class DBAuth:
                 "Password does not match constraints"
             ),
             'expiry': config.get('password_expiry', -1),
+            'expiry_notice': config.get('password_expiry_notice', -1),
             'update_interval': config.get('password_update_interval', -1),
             'allow_reuse': config.get('password_allow_reuse', True)
         }
@@ -706,7 +707,21 @@ class DBAuth:
         access_token = create_access_token(identity=user.name)
         # refresh_token = create_refresh_token(identity=username)
 
-        resp = make_response(redirect(target_url))
+        # check if password will soon expire
+        days = self.days_for_password_expiry_notice(user)
+        if days == -1:
+            # redirect to target URL
+            resp = make_response(redirect(target_url))
+        else:
+            # show expiry notice
+            page = render_template(
+                'notification.html', i18n=i18n,
+                title=i18n.t("auth.notification_page_title"),
+                message=i18n.t("auth.notification_expiry_notice", days=days),
+                target_url=target_url
+            )
+            resp = make_response(page)
+
         # Set the JWTs and the CSRF double submit protection cookies
         # in this response
         set_access_cookies(resp, access_token)
@@ -778,6 +793,55 @@ class DBAuth:
         db_session.commit()
 
         return pw_history
+
+    def days_for_password_expiry_notice(self, user):
+        """Return days until password expires within notice period, or -1
+        (if password expiry and notice is enabled).
+
+        :param User user: User instance
+        """
+        days_notice = -1
+
+        expiry_notice = self.password_constraints['expiry_notice']
+        if self.password_history_active and expiry_notice != -1:
+            # password expiry notice is enabled
+            # get days until expiry
+            db_session = self.db_session()
+            days_remaining = self.days_until_password_expiry(db_session, user)
+            db_session.close()
+
+            if days_remaining != -1 and days_remaining <= expiry_notice:
+                # remaining days within notice period
+                days_notice = days_remaining
+
+        return days_notice
+
+    def days_until_password_expiry(self, db_session, user):
+        """Return days until password expires, or -1
+        (if password expiry is enabled).
+
+        :param Session db_session: DB session
+        :param User user: User instance
+        """
+        days_remaining = -1
+
+        expiry = self.password_constraints['expiry']
+        if self.password_history_active and expiry != -1:
+            # password expiry is enabled
+            pw_history = self.find_latest_password_history(
+                db_session, user=user
+            )
+            if pw_history:
+                # calculate remaining days
+                expires_at = pw_history.created_at + timedelta(days=expiry)
+                if datetime.utcnow() < expires_at:
+                    delta = expires_at - datetime.utcnow()
+                    days_remaining = delta.days
+                    if delta.seconds > 0:
+                        # round up partial days
+                        days_remaining += 1
+
+        return days_remaining
 
     def password_has_expired(self, db_session, user):
         """Return whether a user's password has expired

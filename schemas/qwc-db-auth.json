@@ -51,6 +51,10 @@
           "description": "Number of days until password expires, or -1 to disable",
           "type": "integer"
         },
+        "password_expiry_notice": {
+          "description": "Show an expiry notice within this number of days before a password expires, or `-1` to disable",
+          "type": "integer"
+        },
         "password_update_interval": {
           "description": "Min number of seconds before password may be changed again, or -1 to disable",
           "type": "integer"

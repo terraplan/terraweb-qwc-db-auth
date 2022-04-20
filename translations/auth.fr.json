@@ -44,6 +44,11 @@
 
     "verify_page_title": "Se connecter",
     "verify_form_title": "Entrez votre code de vérification",
-    "verify_code_placeholder": "Code de vérification"
+    "verify_code_placeholder": "Code de vérification",
+
+    "notification_page_title": "Authentification",
+    "notification_form_title": "Connexion",
+    "notification_expiry_notice": "Attention: Votre mot de passe expirera dans %{days} jours",
+    "notification_continue_button": "Continuer"
   }
 }

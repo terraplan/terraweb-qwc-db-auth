@@ -44,6 +44,11 @@
 
     "verify_page_title": "Sign In",
     "verify_form_title": "Enter your verification code",
-    "verify_code_placeholder": "Verification code"
+    "verify_code_placeholder": "Verification code",
+
+    "notification_page_title": "Sign In",
+    "notification_form_title": "Login",
+    "notification_expiry_notice": "Notice: Your password will expire in %{days} days",
+    "notification_continue_button": "Continue"
   }
 }

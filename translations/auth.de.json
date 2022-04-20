@@ -44,6 +44,11 @@
 
     "verify_page_title": "Anmeldung",
     "verify_form_title": "Geben Sie Ihren Verifizierungscode ein",
-    "verify_code_placeholder": "Verifizierungscode"
+    "verify_code_placeholder": "Verifizierungscode",
+
+    "notification_page_title": "Anmeldung",
+    "notification_form_title": "Login",
+    "notification_expiry_notice": "Hinweis: Ihr Passwort läuft in %{days} Tagen ab",
+    "notification_continue_button": "Weiter"
   }
 }

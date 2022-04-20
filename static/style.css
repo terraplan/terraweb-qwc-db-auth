@@ -22,6 +22,9 @@ body {
 .verify {
   width: 450px;
 }
+.notification {
+  width: 450px;
+}
 .login-screen {
   background-color: #FFF;
   padding: 20px;

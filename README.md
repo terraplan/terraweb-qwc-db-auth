@@ -54,12 +54,14 @@ If the `qwc_config.password_histories` table is present, additional optional pas
 ```json
 "config": {
   "password_expiry": 365,
+  "password_expiry_notice": 10,
   "password_update_interval": 600,
   "password_allow_reuse": false
 }
 ```
 
 * `password_expiry` (default: `-1`): Number of days until a password expires, or `-1` to disable. Forces a password change once expired.
+* `password_expiry_notice` (default: `-1`): Show an expiry notice within this number of days before a password expires, or `-1` to disable
 * `password_update_interval` (default: `-1`): Min number of seconds before a password may be changed again, or `-1` to disable
 * `password_allow_reuse` (default: `true`): Set whether a user may reuse previous passwords or not
 

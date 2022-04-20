@@ -8,7 +8,8 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
     </head>
     <body>
-        {% with messages = get_flashed_messages() + form.errors.get('csrf_token', []) %}
+        {% set form_errors = form.errors.get('csrf_token', []) if form else [] %}
+        {% with messages = get_flashed_messages() + form_errors %}
         {% if messages %}
         <ul>
             {% for message in messages %}
