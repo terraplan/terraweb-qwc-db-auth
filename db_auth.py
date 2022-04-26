@@ -507,8 +507,9 @@ class DBAuth:
                     user.last_sign_in_at = datetime.utcnow()
                 db_session.commit()
 
-                # add new entry to password history
-                self.create_password_history(db_session, user)
+                if self.password_history_active:
+                    # add new entry to password history
+                    self.create_password_history(db_session, user)
 
                 flash(i18n.t("auth.edit_password_successful"))
                 target_url = unquote(form.url.data) or None
