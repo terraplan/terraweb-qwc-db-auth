@@ -70,6 +70,13 @@ activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as PO
 `username` and `password`.
 Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/login`.
 
+Additional user info fields from `qwc_config.user_infos` may be added to the JWT identity by setting `user_info_fields`:
+```json
+"config": {
+  "user_info_fields": ["surname", "first_name"]
+}
+```
+
 [Flask-Mail](https://pythonhosted.org/Flask-Mail/) is used for sending mails like password resets. These are the available options:
 * `MAIL_SERVER`: default ‘localhost’
 * `MAIL_PORT`: default 25

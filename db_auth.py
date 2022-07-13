@@ -106,6 +106,9 @@ class DBAuth:
             )
             self.password_history_active = False
 
+        # get user info fields from config
+        self.user_info_fields = config.get('user_info_fields', [])
+
     def tenant_base(self):
         """base path for tentant"""
         # Updates config['JWT_ACCESS_COOKIE_PATH'] as side effect
@@ -705,8 +708,25 @@ class DBAuth:
         login_user(user)
 
         # Create the tokens we will be sending back to the user
-        access_token = create_access_token(identity=user.name)
-        # refresh_token = create_refresh_token(identity=username)
+        if self.user_info_fields:
+            # always add username
+            identity = {
+                'username': user.name
+            }
+            # collect custom user info fields
+            user_info = user.user_info
+            for field in self.user_info_fields:
+                if hasattr(user_info, field):
+                    identity[field] = getattr(user_info, field)
+                else:
+                    self.logger.warning(
+                        "User info field '%s' does not exist" % field
+                    )
+        else:
+            identity = user.name
+
+        access_token = create_access_token(identity=identity)
+        # refresh_token = create_refresh_token(identity=identity)
 
         # check if password will soon expire
         days = self.days_for_password_expiry_notice(user)

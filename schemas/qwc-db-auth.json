@@ -62,6 +62,13 @@
         "password_allow_reuse": {
           "description": "Set whether previous passwords may be reused or not",
           "type": "boolean"
+        },
+        "user_info_fields": {
+          "description": "List of user info fields to include in JWT identity",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
