@@ -455,28 +455,41 @@ class DBAuth:
             title=i18n.t("auth.new_password_page_title")
         )
 
-    def edit_password(self, token):
+    def edit_password(self, token, identity=None):
         """Show form and reset password.
 
-        :param str: Password reset token
+        :param token str: Password reset token
+        :param identity obj: JWT identity
         """
         form = self.edit_password_form()
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
 
-            user = self.find_user(
-                db_session, reset_password_token=form.reset_password_token.data
-            )
+            if identity:
+                user = self.find_user(db_session, name=identity['username'])
+            else:
+                user = self.find_user(
+                    db_session, reset_password_token=form.reset_password_token.data
+                )
             if user:
                 if not self.can_change_password(db_session, user):
                     # time since last password update was too short
                     flash(i18n.t("auth.edit_password_rate_limited"))
-                    target_url = unquote(form.url.data) or None
-                    return self.response(
-                        redirect(url_for('login', url=target_url)),
-                        db_session
-                    )
+                    if not identity:
+                        target_url = unquote(form.url.data) or None
+                        return self.response(
+                            redirect(url_for('login', url=target_url)),
+                            db_session
+                        )
+                    else:
+                        return self.response(
+                            render_template(
+                                'edit_password.html', form=form, i18n=i18n,
+                                title=i18n.t("auth.edit_password_page_title")
+                            ),
+                            db_session
+                        )
 
                 if not self.password_accepted(
                     db_session, user, form.password.data
@@ -516,10 +529,19 @@ class DBAuth:
 
                 flash(i18n.t("auth.edit_password_successful"))
                 target_url = unquote(form.url.data) or None
-                return self.response(
-                    redirect(url_for('login', url=target_url)),
-                    db_session
-                )
+                if not identity:
+                    return self.response(
+                        redirect(url_for('login', url=target_url)),
+                        db_session
+                    )
+                else:
+                    return self.response(
+                        render_template(
+                            'edit_password.html', form=form, i18n=i18n,
+                            title=i18n.t("auth.edit_password_page_title")
+                        ),
+                        db_session
+                    )
             else:
                 # invalid reset token
                 flash(i18n.t("auth.edit_password_invalid_token"))

@@ -114,9 +114,10 @@ def new_password():
 
 
 @app.route('/password/edit', methods=['GET', 'POST'])
+@optional_auth
 def edit_password():
     token = request.args.get('reset_password_token')
-    return db_auth_handler().edit_password(token)
+    return db_auth_handler().edit_password(token, get_identity())
 
 
 """ readyness probe endpoint """
