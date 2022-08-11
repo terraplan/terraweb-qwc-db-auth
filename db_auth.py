@@ -715,6 +715,8 @@ class DBAuth:
             }
             # collect custom user info fields
             user_info = user.user_info
+            # Always store user_id
+            identity["user_id"] = getattr(user_info, "user_id")
             for field in self.user_info_fields:
                 if hasattr(user_info, field):
                     identity[field] = getattr(user_info, field)
