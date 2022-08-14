@@ -32,6 +32,9 @@ SUPPORTED_LANGUAGES = ['en', 'de', 'fr']
 # *Enable* WTForms built-in messages translation
 # https://wtforms.readthedocs.io/en/2.3.x/i18n/
 app.config['WTF_I18N_ENABLED'] = False
+# WTF CSRF protection conflicts with JWT CSRF protection
+# https://github.com/vimalloc/flask-jwt-extended/issues/15
+app.config['WTF_CSRF_ENABLED'] = False
 
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
@@ -83,6 +86,7 @@ def load_user(id):
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@optional_auth
 def login():
     return db_auth_handler().login()
 
@@ -99,16 +103,19 @@ def logout():
 
 
 @app.route('/totp', methods=['POST'])
+@optional_auth
 def setup_totp():
     return db_auth_handler().setup_totp()
 
 
 @app.route('/qrcode', methods=['GET'])
+@optional_auth
 def qrcode():
     return db_auth_handler().qrcode()
 
 
 @app.route('/password/new', methods=['GET', 'POST'])
+@optional_auth
 def new_password():
     return db_auth_handler().new_password()
 

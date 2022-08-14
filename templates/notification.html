@@ -3,6 +3,7 @@
 {% block content %}
     <h1>{{ i18n.t('auth.notification_page_title') }}</h1>
     <form action="#" method="get">
+        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ csrf_token }}">
         <div class="login notification">
             <div class="login-screen">
                 <div class="app-title">

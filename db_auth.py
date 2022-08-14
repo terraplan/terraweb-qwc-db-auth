@@ -8,7 +8,7 @@ from flask import abort, flash, make_response, redirect, render_template, \
     request, Response, session, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user
 from flask_jwt_extended import create_access_token, create_refresh_token, \
-    set_access_cookies, unset_jwt_cookies
+    set_access_cookies, unset_jwt_cookies, get_jwt
 from flask_mail import Message
 import pyotp
 import qrcode
@@ -114,6 +114,14 @@ class DBAuth:
         # Updates config['JWT_ACCESS_COOKIE_PATH'] as side effect
         prefix = self.app.session_interface.get_cookie_path(self.app)
         return prefix.rstrip('/') + '/'
+
+    def csrf_token(self):
+        """ Inject CSRF token """
+        token = (get_jwt() or {}).get("csrf")
+        if token:
+            return token
+        else:
+            return ""
 
     def login(self):
         """Authorize user and sign in."""
@@ -231,7 +239,8 @@ class DBAuth:
 
         return self.response(
             render_template('login.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.login_page_title")),
+                            title=i18n.t("auth.login_page_title"),
+                            csrf_token=self.csrf_token()),
             db_session
         )
 
@@ -275,7 +284,8 @@ class DBAuth:
                 return redirect(url_for('login'))
 
         return render_template('verify.html', form=form, i18n=i18n,
-                               title=i18n.t("auth.verify_page_title"))
+                               title=i18n.t("auth.verify_page_title",
+                               csrf_token=self.csrf_token()))
 
     def logout(self, identity):
         """Sign out."""
@@ -347,7 +357,8 @@ class DBAuth:
         resp = make_response(render_template(
             'qrcode.html', form=form, i18n=i18n,
             title=i18n.t("auth.qrcode_page_title"),
-            totp_secret=totp_secret
+            totp_secret=totp_secret,
+            csrf_token=self.csrf_token()
         ))
         # do not cache in browser
         resp.headers.set(
@@ -436,7 +447,8 @@ class DBAuth:
                     return self.response(
                         render_template(
                             'new_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.new_password_page_title")
+                            title=i18n.t("auth.new_password_page_title"),
+                            csrf_token=self.csrf_token()
                         ),
                         db_session
                     )
@@ -452,7 +464,8 @@ class DBAuth:
 
         return render_template(
             'new_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.new_password_page_title")
+            title=i18n.t("auth.new_password_page_title"),
+            csrf_token=self.csrf_token()
         )
 
     def edit_password(self, token, identity=None):
@@ -486,7 +499,8 @@ class DBAuth:
                         return self.response(
                             render_template(
                                 'edit_password.html', form=form, i18n=i18n,
-                                title=i18n.t("auth.edit_password_page_title")
+                                title=i18n.t("auth.edit_password_page_title"),
+                                csrf_token=self.csrf_token()
                             ),
                             db_session
                         )
@@ -508,7 +522,8 @@ class DBAuth:
                     return self.response(
                         render_template(
                             'edit_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.edit_password_page_title")
+                            title=i18n.t("auth.edit_password_page_title"),
+                            csrf_token=self.csrf_token()
                         ),
                         db_session
                     )
@@ -538,7 +553,8 @@ class DBAuth:
                     return self.response(
                         render_template(
                             'edit_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.edit_password_page_title")
+                            title=i18n.t("auth.edit_password_page_title"),
+                            csrf_token=self.csrf_token()
                         ),
                         db_session
                     )
@@ -548,7 +564,8 @@ class DBAuth:
                 return self.response(
                     render_template(
                         'edit_password.html', form=form, i18n=i18n,
-                        title=i18n.t("auth.edit_password_page_title")
+                        title=i18n.t("auth.edit_password_page_title"),
+                        csrf_token=self.csrf_token()
                     ),
                     db_session
                 )
@@ -559,7 +576,8 @@ class DBAuth:
 
         return render_template(
             'edit_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.edit_password_page_title")
+            title=i18n.t("auth.edit_password_page_title"),
+            csrf_token=self.csrf_token()
         )
 
     def require_password_change(self, user, reason, target_url, db_session):
@@ -590,7 +608,8 @@ class DBAuth:
         flash(i18n.t('auth.edit_password_message'))
         return render_template(
             'edit_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.edit_password_page_title")
+            title=i18n.t("auth.edit_password_page_title"),
+            csrf_token=self.csrf_token()
         )
 
     def edit_password_form(self):
@@ -763,7 +782,8 @@ class DBAuth:
                 'notification.html', i18n=i18n,
                 title=i18n.t("auth.notification_page_title"),
                 message=i18n.t("auth.notification_expiry_notice", days=days),
-                target_url=target_url
+                target_url=target_url,
+                csrf_token=self.csrf_token()
             )
             resp = make_response(page)
 
@@ -806,7 +826,8 @@ class DBAuth:
         # set message body from template
         msg.body = render_template(
             'reset_password_instructions.%s.txt' % i18n.get('locale'),
-            user=user, reset_url=reset_url
+            user=user, reset_url=reset_url,
+            csrf_token=self.csrf_token()
         )
 
         # send message
