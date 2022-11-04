@@ -259,12 +259,12 @@ class DBAuth:
                             (False if shown after login form)
         """
         if not TOTP_ENABLED or 'login_uid' not in session:
-            # TOTP not enabled or not in login process
+            self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         user = self.find_user(db_session, id=session.get('login_uid', None))
         if user is None:
-            # user not found
+            self.logger.warning("user not found")
             return redirect(url_for('login'))
 
         form = VerifyForm(meta=wft_locales())
@@ -280,7 +280,7 @@ class DBAuth:
                 form.token.data = None
 
             if user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS:
-                # redirect to login after too many login attempts
+                self.logger.info("redirect to login after too many login attempts")
                 return redirect(url_for('login'))
 
         return render_template('verify.html', form=form, i18n=i18n,
@@ -312,7 +312,7 @@ class DBAuth:
                             (False if shown after login form)
         """
         if not TOTP_ENABLED or 'login_uid' not in session:
-            # TOTP not enabled or not in login process
+            self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         user = self.find_user(db_session, id=session.get('login_uid', None))
@@ -372,7 +372,7 @@ class DBAuth:
     def qrcode(self):
         """Return TOTP QR code."""
         if not TOTP_ENABLED or 'login_uid' not in session:
-            # TOTP not enabled or not in login process
+            self.logger.warning("TOTP not enabled or not in login process")
             abort(404)
 
         # check presence of show_qrcode
