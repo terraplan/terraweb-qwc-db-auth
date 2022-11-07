@@ -22,6 +22,8 @@ app.config['JWT_COOKIE_SAMESITE'] = os.environ.get(
     'JWT_COOKIE_SAMESITE', 'Lax')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.environ.get(
     'JWT_ACCESS_TOKEN_EXPIRES', 12*3600))
+app.config['SESSION_COOKIE_SECURE'] = app.config['JWT_COOKIE_SECURE']
+app.config['SESSION_COOKIE_SAMESITE'] = app.config['JWT_COOKIE_SAMESITE']
 
 jwt = auth_manager(app)
 app.secret_key = app.config['JWT_SECRET_KEY']
