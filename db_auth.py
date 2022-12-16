@@ -68,6 +68,9 @@ class DBAuth:
         config_handler = RuntimeConfig("dbAuth", self.logger)
         config = config_handler.tenant_config(tenant)
 
+        self.login_logo = config.get('logo_image_url')
+        self.login_background = config.get('background_image_url')
+        self.customstylesheet = config.get('customstylesheet')
         db_url = config.get('db_url')
 
         # get password constraints from config
@@ -165,6 +168,9 @@ class DBAuth:
                     )
 
         form = LoginForm(meta=wft_locales())
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         if form.validate_on_submit():
             user = self.find_user(db_session, name=form.username.data)
 

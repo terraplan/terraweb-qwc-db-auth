@@ -6,8 +6,14 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+        {% if form.customstylesheet %}
+        <link rel="stylesheet" href="{{ url_for('static', filename=form.customstylesheet) }}" type="text/css">
+        {% endif %}
     </head>
     <body>
+        {% if form.background %}
+        <div class="form-background" style="background-image: url('{{form.background}}');">
+        {% endif %}
         {% set form_errors = form.errors.get('csrf_token', []) if form else [] %}
         {% with messages = get_flashed_messages() + form_errors %}
         {% if messages %}
@@ -19,5 +25,8 @@
         {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
+        {% if form.background %}
+        </div>
+        {% endif %}
     </body>
 </html>

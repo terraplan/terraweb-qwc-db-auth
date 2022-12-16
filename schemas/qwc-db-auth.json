@@ -69,7 +69,19 @@
           "items": {
             "type": "string"
           }
-        }
+        },
+        "logo_image_url": {
+          "description": "URL to a logo image to show in the login form",
+          "type": "string"
+        },
+        "background_image_url": {
+          "description": "URL to a background image for the login page",
+          "type": "string"
+        },
+        "customstylesheet": {
+          "description": "Filename of custom stylesheet placed next to regular style.css",
+          "type": "string"
+        },
       },
       "required": [
         "db_url"
