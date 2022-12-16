@@ -274,6 +274,9 @@ class DBAuth:
             return redirect(url_for('login'))
 
         form = VerifyForm(meta=wft_locales())
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         if submit and form.validate_on_submit():
             if self.user_totp_is_valid(user, form.token.data, db_session):
                 # TOTP verified
@@ -334,6 +337,9 @@ class DBAuth:
             session['totp_secret'] = totp_secret
 
         form = VerifyForm(meta=wft_locales())
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         if submit and form.validate_on_submit():
             if pyotp.totp.TOTP(totp_secret).verify(
                 form.token.data, valid_window=1
@@ -431,6 +437,9 @@ class DBAuth:
     def new_password(self):
         """Show form and send reset password instructions."""
         form = NewPasswordForm(meta=wft_locales())
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -481,6 +490,9 @@ class DBAuth:
         :param identity obj: JWT identity
         """
         form = self.edit_password_form()
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -602,6 +614,9 @@ class DBAuth:
 
         # show password reset form
         form = self.edit_password_form()
+        form.logo = self.login_logo
+        form.background = self.login_background
+        form.customstylesheet = self.customstylesheet
         # set hidden fields
         form.reset_password_token.data = user.reset_password_token
         form.url.data = target_url
