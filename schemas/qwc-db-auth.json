@@ -81,7 +81,7 @@
         "customstylesheet": {
           "description": "Filename of custom stylesheet placed next to regular style.css",
           "type": "string"
-        },
+        }
       },
       "required": [
         "db_url"
