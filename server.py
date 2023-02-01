@@ -93,6 +93,12 @@ def login():
     return db_auth_handler().login()
 
 
+@app.route('/verify_login', methods=['POST'])
+@optional_auth
+def verify_login():
+    return db_auth_handler().verify_login()
+
+
 @app.route('/verify', methods=['POST'])
 def verify():
     return db_auth_handler().verify()

@@ -5,7 +5,7 @@ import os
 from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse, unquote
 
 from flask import abort, flash, make_response, redirect, render_template, \
-    request, Response, session, url_for, get_flashed_messages
+    request, Response, session, url_for, get_flashed_messages, jsonify
 from flask_login import current_user, login_user, logout_user
 from flask_jwt_extended import create_access_token, create_refresh_token, \
     set_access_cookies, unset_jwt_cookies, get_jwt
@@ -249,6 +249,23 @@ class DBAuth:
                             csrf_token=self.csrf_token()),
             db_session
         )
+
+    def verify_login(self):
+        """Verify user login (e.g. from basic auth header)."""
+        req = request.form
+        username = req.get(self.USERNAME)
+        password = req.get(self.PASSWORD)
+        if username:
+            db_session = self.db_session()
+            user = self.find_user(db_session, name=username)
+            if self.__user_is_authorized(user, password, db_session):
+                # access_token = create_access_token(identity=username)
+                return jsonify({"identity": username})
+            else:
+                self.logger.info(
+                    "verify_login: Invalid username or password")
+                abort(401)
+        abort(401)
 
     def verify(self):
         """Handle submit of form for TOTP verification token."""
