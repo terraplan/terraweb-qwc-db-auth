@@ -100,6 +100,7 @@ def verify_login():
 
 
 @app.route('/verify', methods=['POST'])
+@optional_auth
 def verify():
     return db_auth_handler().verify()
 

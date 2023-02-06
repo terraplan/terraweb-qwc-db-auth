@@ -310,8 +310,8 @@ class DBAuth:
                 return redirect(url_for('login'))
 
         return render_template('verify.html', form=form, i18n=i18n,
-                               title=i18n.t("auth.verify_page_title",
-                               csrf_token=self.csrf_token()))
+                               title=i18n.t("auth.verify_page_title"),
+                               csrf_token=self.csrf_token())
 
     def logout(self, identity):
         """Sign out."""
