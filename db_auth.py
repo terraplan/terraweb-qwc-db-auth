@@ -815,9 +815,15 @@ class DBAuth:
             # redirect to target URL
             resp = make_response(redirect(target_url))
         else:
+            # dummy form for expiry notice with customization
+            form = LoginForm()
+            form.logo = self.login_logo
+            form.background = self.login_background
+            form.customstylesheet = self.customstylesheet
+
             # show expiry notice
             page = render_template(
-                'notification.html', i18n=i18n,
+                'notification.html', form=form, i18n=i18n,
                 title=i18n.t("auth.notification_page_title"),
                 message=i18n.t("auth.notification_expiry_notice", days=days),
                 target_url=target_url,
