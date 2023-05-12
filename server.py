@@ -5,6 +5,7 @@ import re
 from flask import Flask, request, jsonify
 from flask_login import LoginManager
 from flask_jwt_extended import jwt_required
+from flask_wtf.csrf import CSRFError
 from flask_mail import Mail
 import i18n
 
@@ -135,6 +136,9 @@ def edit_password():
     token = request.args.get('reset_password_token')
     return db_auth_handler().edit_password(token, get_identity())
 
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return redirect(request.url)
 
 """ readyness probe endpoint """
 @app.route("/ready", methods=['GET'])
