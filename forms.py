@@ -12,6 +12,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
     logo = "http://qwc2.sourcepole.ch/assets/img/logo.svg"
     background = ""
+    terms_url = "https://qgis.org/en/site/"
 
 
 class VerifyForm(FlaskForm):
