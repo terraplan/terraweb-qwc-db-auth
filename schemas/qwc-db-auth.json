@@ -81,6 +81,10 @@
         "customstylesheet": {
           "description": "Filename of custom stylesheet placed next to regular style.css",
           "type": "string"
+        },
+        "terms_url":{
+          "description": "URL to terms of use",
+          "type": "string"
         }
       },
       "required": [

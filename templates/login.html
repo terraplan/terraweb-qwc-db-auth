@@ -39,6 +39,9 @@
 
                 <div>
                     <a href="{{ url_for('new_password') }}" class="login-link">{{ i18n.t('auth.forgot_password') }}</a>
+                    {% if form.terms_url %}
+                    <a href="{{form.terms_url}}" class="login-link">Terms and conditions</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
