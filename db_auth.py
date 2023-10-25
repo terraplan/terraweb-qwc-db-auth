@@ -789,24 +789,20 @@ class DBAuth:
         login_user(user)
 
         # Create the tokens we will be sending back to the user
-        if self.user_info_fields:
-            # always add username
-            identity = {
-                'username': user.name
-            }
-            # collect custom user info fields
-            user_info = user.user_info
-            # Always store user_id
-            identity["user_id"] = getattr(user_info, "user_id")
-            for field in self.user_info_fields:
-                if hasattr(user_info, field):
-                    identity[field] = getattr(user_info, field)
-                else:
-                    self.logger.warning(
-                        "User info field '%s' does not exist" % field
-                    )
-        else:
-            identity = user.name
+        identity = {
+            'username': user.name
+        }
+        # collect custom user info fields
+        user_info = user.user_info
+        # Always store user_id
+        identity["user_id"] = user.id
+        for field in self.user_info_fields:
+            if hasattr(user_info, field):
+                identity[field] = getattr(user_info, field)
+            else:
+                self.logger.warning(
+                    "User info field '%s' does not exist" % field
+                )
 
         access_token = create_access_token(identity=identity)
         # refresh_token = create_refresh_token(identity=identity)
