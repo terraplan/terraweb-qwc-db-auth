@@ -15,6 +15,7 @@ import qrcode
 import i18n
 from werkzeug.security import check_password_hash
 
+from qwc_services_core.auth import get_username
 from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.config_models import ConfigModels
 from qwc_services_core.runtime_config import RuntimeConfig
@@ -517,7 +518,7 @@ class DBAuth:
             db_session = self.db_session()
 
             if identity:
-                user = self.find_user(db_session, name=identity['username'])
+                user = self.find_user(db_session, name=get_username(identity))
             else:
                 user = self.find_user(
                     db_session, reset_password_token=form.reset_password_token.data
