@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime, timedelta
+import datetime
 from io import BytesIO
 import os
 from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse, unquote
@@ -370,7 +370,7 @@ class DBAuth:
                 user.totp_secret = totp_secret
                 # update last sign in timestamp and reset failed attempts
                 # counter
-                user.last_sign_in_at = datetime.utcnow()
+                user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                 user.failed_sign_in_count = 0
                 db_session.commit()
 
@@ -573,7 +573,7 @@ class DBAuth:
                 if user.last_sign_in_at is None:
                     # set last sign in timestamp after required password change
                     # to mark as password changed
-                    user.last_sign_in_at = datetime.utcnow()
+                    user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                 db_session.commit()
 
                 if self.password_history_active:
@@ -732,7 +732,7 @@ class DBAuth:
                 if not TOTP_ENABLED:
                     # update last sign in timestamp and reset failed attempts
                     # counter
-                    user.last_sign_in_at = datetime.utcnow()
+                    user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                     user.failed_sign_in_count = 0
                     db_session.commit()
 
@@ -763,7 +763,7 @@ class DBAuth:
         elif pyotp.totp.TOTP(user.totp_secret).verify(token, valid_window=1):
             # valid token
             # update last sign in timestamp and reset failed attempts counter
-            user.last_sign_in_at = datetime.utcnow()
+            user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
             user.failed_sign_in_count = 0
             db_session.commit()
 
@@ -896,7 +896,7 @@ class DBAuth:
         pw_history = self.PasswordHistory(
             user=user,
             password_hash=user.password_hash,
-            created_at=datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.UTC)
         )
         db_session.add(pw_history)
         db_session.commit()
@@ -942,9 +942,9 @@ class DBAuth:
             )
             if pw_history:
                 # calculate remaining days
-                expires_at = pw_history.created_at + timedelta(days=expiry)
-                if datetime.utcnow() < expires_at:
-                    delta = expires_at - datetime.utcnow()
+                expires_at = pw_history.created_at + datetime.timedelta(days=expiry)
+                if datetime.datetime.now(datetime.UTC) < expires_at:
+                    delta = expires_at - datetime.datetime.now(datetime.UTC)
                     days_remaining = delta.days
                     if delta.seconds > 0:
                         # round up partial days
@@ -969,8 +969,8 @@ class DBAuth:
             )
             if (
                 pw_history and
-                datetime.utcnow() >
-                    pw_history.created_at + timedelta(days=expiry)
+                datetime.datetime.now(datetime.UTC) >
+                    pw_history.created_at + datetime.timedelta(days=expiry)
             ):
                 # password has expired
                 expired = True
@@ -995,8 +995,8 @@ class DBAuth:
             # check time since last password update
             if (
                 pw_history and
-                datetime.utcnow() <
-                    pw_history.created_at + timedelta(seconds=update_interval)
+                datetime.datetime.now(datetime.UTC) <
+                    pw_history.created_at + datetime.timedelta(seconds=update_interval)
             ):
                 # time since last update was too short
                 allow_change = False
