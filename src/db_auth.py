@@ -31,7 +31,7 @@ if POST_PARAM_LOGIN.lower() in ("f", "false"):
 MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 20))
 
 # enable two factor authentication using TOTP
-TOTP_ENABLED = os.environ.get('TOTP_ENABLED', 'False') == 'True'
+TOTP_ENABLED = os.environ.get('TOTP_ENABLED', 'False').lower() == 'true'
 
 # issuer name for QR code URI
 TOTP_ISSUER_NAME = os.environ.get('TOTP_ISSUER_NAME', 'QWC Services')
