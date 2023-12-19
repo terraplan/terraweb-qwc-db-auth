@@ -138,7 +138,7 @@ Usage
 
 Run standalone application:
 
-    python server.py
+    python src/server.py
 
 Endpoints:
 
@@ -174,4 +174,4 @@ Configure environment:
 
 Start local service:
 
-     python server.py
+     python src/server.py
