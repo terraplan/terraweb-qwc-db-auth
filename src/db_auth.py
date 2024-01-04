@@ -73,6 +73,7 @@ class DBAuth:
         self.login_background = config.get('background_image_url')
         self.customstylesheet = config.get('customstylesheet')
         self.terms_url = config.get('terms_url')
+        self.favicon = config.get('favicon')
         db_url = config.get('db_url')
 
         # get password constraints from config
@@ -174,6 +175,7 @@ class DBAuth:
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
         form.terms_url = self.terms_url
+        form.favicon = self.favicon
         if form.validate_on_submit():
             user = self.find_user(db_session, name=form.username.data)
 
@@ -297,6 +299,7 @@ class DBAuth:
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
+        form.favicon = self.favicon
         if submit and form.validate_on_submit():
             if self.user_totp_is_valid(user, form.token.data, db_session):
                 # TOTP verified
@@ -360,6 +363,7 @@ class DBAuth:
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
+        form.favicon = self.favicon
         if submit and form.validate_on_submit():
             if pyotp.totp.TOTP(totp_secret).verify(
                 form.token.data, valid_window=1
@@ -460,6 +464,7 @@ class DBAuth:
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
+        form.favicon = self.favicon
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -513,6 +518,7 @@ class DBAuth:
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
+        form.favicon = self.favicon
         if form.validate_on_submit():
             # create session for ConfigDB
             db_session = self.db_session()
@@ -637,6 +643,7 @@ class DBAuth:
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
+        form.favicon = self.favicon
         # set hidden fields
         form.reset_password_token.data = user.reset_password_token
         form.url.data = target_url
@@ -819,7 +826,7 @@ class DBAuth:
             form.logo = self.login_logo
             form.background = self.login_background
             form.customstylesheet = self.customstylesheet
-
+            form.favicon = self.favicon
             # show expiry notice
             page = render_template(
                 'notification.html', form=form, i18n=i18n,
