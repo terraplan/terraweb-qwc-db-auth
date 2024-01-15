@@ -105,3 +105,8 @@ input:focus {
   display: block;
     margin-top: 12px;
 }
+
+.login-hint {
+  text-align: left;
+  font-size: 14px;
+}

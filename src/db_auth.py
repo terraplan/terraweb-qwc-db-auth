@@ -73,6 +73,12 @@ class DBAuth:
         self.login_background = config.get('background_image_url')
         self.customstylesheet = config.get('customstylesheet')
         self.terms_url = config.get('terms_url')
+        self.login_hint = config.get('login_hint')
+        if isinstance(self.login_hint, dict):
+            self.login_hint = self.login_hint.get(
+                i18n.get('locale'),
+                self.login_hint.get('en', '')
+        )
         self.favicon = config.get('favicon')
         db_url = config.get('db_url')
 
@@ -251,6 +257,7 @@ class DBAuth:
         return self.response(
             render_template('login.html', form=form, i18n=i18n,
                             title=i18n.t("auth.login_page_title"),
+                            login_hint=self.login_hint,
                             csrf_token=self.csrf_token()),
             db_session
         )
