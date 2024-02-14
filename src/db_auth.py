@@ -956,7 +956,7 @@ class DBAuth:
             )
             if pw_history:
                 # calculate remaining days
-                expires_at = pw_history.created_at + datetime.timedelta(days=expiry)
+                expires_at = pw_history.created_at.replace(tzinfo=datetime.UTC) + datetime.timedelta(days=expiry)
                 if datetime.datetime.now(datetime.UTC) < expires_at:
                     delta = expires_at - datetime.datetime.now(datetime.UTC)
                     days_remaining = delta.days
@@ -983,8 +983,8 @@ class DBAuth:
             )
             if (
                 pw_history and
-                datetime.datetime.now(datetime.UTC) >
-                    pw_history.created_at + datetime.timedelta(days=expiry)
+                datetime.utcnow() >
+                    pw_history.created_at.replace(tzinfo=datetime.UTC) + datetime.timedelta(days=expiry)
             ):
                 # password has expired
                 expired = True
@@ -1010,7 +1010,7 @@ class DBAuth:
             if (
                 pw_history and
                 datetime.datetime.now(datetime.UTC) <
-                    pw_history.created_at + datetime.timedelta(seconds=update_interval)
+                    pw_history.created_at.replace(tzinfo=datetime.UTC) + datetime.timedelta(seconds=update_interval)
             ):
                 # time since last update was too short
                 allow_change = False
