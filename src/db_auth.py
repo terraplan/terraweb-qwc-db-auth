@@ -159,110 +159,89 @@ class DBAuth:
         self.clear_verify_session()
 
         # create session for ConfigDB
-        db_session = self.db_session()
+        with self.db_session() as db_session, db_session.begin():
 
-        if POST_PARAM_LOGIN:
-            username = req.get(self.USERNAME)
-            password = req.get(self.PASSWORD)
-            if username:
-                user = self.find_user(db_session, name=username)
-                if self.__user_is_authorized(user, password, db_session):
-                    return self.response(
-                        self.__login_response(user, target_url), db_session
-                    )
-                else:
-                    self.logger.info(
-                        "POST_PARAM_LOGIN: Invalid username or password")
-                    return self.response(
-                        redirect(url_for('login', url=retry_target_url)),
-                        db_session
-                    )
+            if POST_PARAM_LOGIN:
+                username = req.get(self.USERNAME)
+                password = req.get(self.PASSWORD)
+                if username:
+                    user = self.find_user(db_session, name=username)
+                    if self.__user_is_authorized(user, password):
+                        return self.__login_response(user, target_url)
+                    else:
+                        self.logger.info(
+                            "POST_PARAM_LOGIN: Invalid username or password")
+                        return redirect(url_for('login', url=retry_target_url))
 
-        form = LoginForm(meta=wft_locales())
-        form.logo = self.login_logo
-        form.background = self.login_background
-        form.customstylesheet = self.customstylesheet
-        form.terms_url = self.terms_url
-        form.favicon = self.favicon
-        if form.validate_on_submit():
-            user = self.find_user(db_session, name=form.username.data)
+            form = LoginForm(meta=wft_locales())
+            form.logo = self.login_logo
+            form.background = self.login_background
+            form.customstylesheet = self.customstylesheet
+            form.terms_url = self.terms_url
+            form.favicon = self.favicon
+            if form.validate_on_submit():
+                user = self.find_user(db_session, name=form.username.data)
 
-            # force password change on first sign in of default admin user
-            # NOTE: user.last_sign_in_at will be set after successful auth
-            force_password_change = (
-                user and user.name == self.DEFAULT_ADMIN_USER
-                and user.last_sign_in_at is None
-            )
+                # force password change on first sign in of default admin user
+                # NOTE: user.last_sign_in_at will be set after successful auth
+                force_password_change = (
+                    user and user.name == self.DEFAULT_ADMIN_USER
+                    and user.last_sign_in_at is None
+                )
 
-            # check if password has expired
-            password_has_expired = self.password_has_expired(db_session, user)
-            if password_has_expired:
-                force_password_change = True
+                # check if password has expired
+                password_has_expired = self.password_has_expired(db_session, user)
+                if password_has_expired:
+                    force_password_change = True
 
-            if self.__user_is_authorized(user, form.password.data,
-                                         db_session):
-                if not force_password_change:
-                    if self.password_history_active:
-                        # check if any password history is present
-                        pw_history = self.find_latest_password_history(
-                            db_session, user=user
-                        )
-                        if pw_history is None:
-                            # add initial password history entry if missing
-                            self.create_password_history(db_session, user)
-
-                    if TOTP_ENABLED:
-                        session['login_uid'] = user.id
-                        session['target_url'] = target_url
-                        if user.totp_secret:
-                            # show form for verification token
-                            return self.response(
-                                 self.__verify(db_session, False),
-                                 db_session
+                if self.__user_is_authorized(user, form.password.data):
+                    if not force_password_change:
+                        if self.password_history_active:
+                            # check if any password history is present
+                            pw_history = self.find_latest_password_history(
+                                db_session, user=user
                             )
+                            if pw_history is None:
+                                # add initial password history entry if missing
+                                self.create_password_history(db_session, user)
+
+                        if TOTP_ENABLED:
+                            session['login_uid'] = user.id
+                            session['target_url'] = target_url
+                            if user.totp_secret:
+                                # show form for verification token
+                                return self.__verify(db_session, False)
+                            else:
+                                # show form for TOTP setup on first sign in
+                                return self.__setup_totp(db_session, False)
                         else:
-                            # show form for TOTP setup on first sign in
-                            return self.response(
-                                self.__setup_totp(db_session, False),
-                                db_session
-                            )
+                            # login successful
+                            return self.__login_response(user, target_url)
                     else:
-                        # login successful
-                        return self.response(
-                            self.__login_response(user, target_url),
-                            db_session
+                        if password_has_expired:
+                            self.logger.info(
+                                "Force password change on expired password"
+                            )
+                            reason = self.PASSWORD_CHANGE_REASON_EXPIRED
+                        else:
+                            self.logger.info(
+                                "Force password change on first login"
+                            )
+                            reason = self.PASSWORD_CHANGE_REASON_FIRST_LOGIN
+
+                        return self.require_password_change(
+                            user, reason, target_url
                         )
                 else:
-                    if password_has_expired:
-                        self.logger.info(
-                            "Force password change on expired password"
-                        )
-                        reason = self.PASSWORD_CHANGE_REASON_EXPIRED
-                    else:
-                        self.logger.info(
-                            "Force password change on first login"
-                        )
-                        reason = self.PASSWORD_CHANGE_REASON_FIRST_LOGIN
+                    form.username.errors.append(i18n.t('auth.auth_failed'))
+                    form.password.errors.append(i18n.t('auth.auth_failed'))
+                    # Maybe different message when
+                    # user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS
 
-                    return self.response(
-                        self.require_password_change(
-                            user, reason, target_url, db_session
-                        ),
-                        db_session
-                    )
-            else:
-                form.username.errors.append(i18n.t('auth.auth_failed'))
-                form.password.errors.append(i18n.t('auth.auth_failed'))
-                # Maybe different message when
-                # user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS
-
-        return self.response(
-            render_template('login.html', form=form, i18n=i18n,
+        return render_template('login.html', form=form, i18n=i18n,
                             title=i18n.t("auth.login_page_title"),
                             login_hint=self.login_hint,
-                            csrf_token=self.csrf_token()),
-            db_session
-        )
+                            csrf_token=self.csrf_token())
 
     def verify_login(self):
         """Verify user login (e.g. from basic auth header)."""
@@ -270,23 +249,22 @@ class DBAuth:
         username = req.get(self.USERNAME)
         password = req.get(self.PASSWORD)
         if username:
-            db_session = self.db_session()
-            user = self.find_user(db_session, name=username)
-            if self.__user_is_authorized(user, password, db_session):
-                # access_token = create_access_token(identity=username)
-                return jsonify({"identity": username})
-            else:
-                self.logger.info(
-                    "verify_login: Invalid username or password")
-                abort(401)
+            with self.db_session() as db_session, db_session.begin():
+                user = self.find_user(db_session, name=username)
+                if self.__user_is_authorized(user, password):
+                    # access_token = create_access_token(identity=username)
+                    return jsonify({"identity": username})
+                else:
+                    self.logger.info(
+                        "verify_login: Invalid username or password")
+                    abort(401)
         abort(401)
 
     def verify(self):
         """Handle submit of form for TOTP verification token."""
         # create session for ConfigDB
-        db_session = self.db_session()
-
-        return self.response(self.__verify(db_session), db_session)
+        with self.db_session() as db_session, db_session.begin():
+            return self.__verify(db_session)
 
     def __verify(self, db_session, submit=True):
         """Show form for TOTP verification token.
@@ -310,7 +288,7 @@ class DBAuth:
         form.customstylesheet = self.customstylesheet
         form.favicon = self.favicon
         if submit and form.validate_on_submit():
-            if self.user_totp_is_valid(user, form.token.data, db_session):
+            if self.user_totp_is_valid(user, form.token.data):
                 # TOTP verified
                 target_url = session.pop('target_url', self.tenant_base())
                 self.clear_verify_session()
@@ -341,9 +319,8 @@ class DBAuth:
     def setup_totp(self):
         """Handle submit of form with TOTP QR Code and token confirmation."""
         # create session for ConfigDB
-        db_session = self.db_session()
-
-        return self.response(self.__setup_totp(db_session), db_session)
+        with self.db_session() as db_session, db_session.begin():
+            return self.__setup_totp(db_session)
 
     def __setup_totp(self, db_session, submit=True):
         """Show form with TOTP QR Code and token confirmation.
@@ -385,7 +362,6 @@ class DBAuth:
                 # counter
                 user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                 user.failed_sign_in_count = 0
-                db_session.commit()
 
                 target_url = session.pop('target_url', self.tenant_base())
                 self.clear_verify_session()
@@ -434,11 +410,9 @@ class DBAuth:
             abort(404)
 
         # create session for ConfigDB
-        db_session = self.db_session()
-        # find user by ID
-        user = self.find_user(db_session, id=session.get('login_uid', None))
-        # close session
-        db_session.close()
+        with self.db_session() as db_session:
+            # find user by ID
+            user = self.find_user(db_session, id=session.get('login_uid', None))
 
         if user is None:
             # user not found
@@ -476,40 +450,33 @@ class DBAuth:
         form.favicon = self.favicon
         if form.validate_on_submit():
             # create session for ConfigDB
-            db_session = self.db_session()
+            with self.db_session() as db_session, db_session.begin():
 
-            user = self.find_user(db_session, email=form.email.data)
-            if user:
-                # generate and save reset token
-                user.reset_password_token = self.generate_token()
-                db_session.commit()
+                user = self.find_user(db_session, email=form.email.data)
+                if user:
+                    # generate and save reset token
+                    user.reset_password_token = self.generate_token()
 
-                # send password reset instructions
-                try:
-                    self.send_reset_passwort_instructions(user)
-                except Exception as e:
-                    self.logger.error(
-                        "Could not send reset password instructions to "
-                        "user '%s':\n%s" % (user.email, e)
-                    )
-                    flash(i18n.t("auth.reset_mail_failed"))
-                    return self.response(
-                        render_template(
+                    # send password reset instructions
+                    try:
+                        self.send_reset_passwort_instructions(user)
+                    except Exception as e:
+                        self.logger.error(
+                            "Could not send reset password instructions to "
+                            "user '%s':\n%s" % (user.email, e)
+                        )
+                        flash(i18n.t("auth.reset_mail_failed"))
+                        return render_template(
                             'new_password.html', form=form, i18n=i18n,
                             title=i18n.t("auth.new_password_page_title"),
                             csrf_token=self.csrf_token()
-                        ),
-                        db_session
-                    )
-            else:
-                self.logger.info("User lookup failed")
+                        )
+                else:
+                    self.logger.info("User lookup failed")
 
-            # NOTE: show message anyway even if email not found
-            flash(i18n.t("auth.reset_message"))
-            return self.response(
-                redirect(url_for('login')),
-                db_session
-            )
+                # NOTE: show message anyway even if email not found
+                flash(i18n.t("auth.reset_message"))
+                return redirect(url_for('login'))
 
         return render_template(
             'new_password.html', form=form, i18n=i18n,
@@ -530,98 +497,79 @@ class DBAuth:
         form.favicon = self.favicon
         if form.validate_on_submit():
             # create session for ConfigDB
-            db_session = self.db_session()
+            with self.db_session() as db_session, db_session.begin():
 
-            if identity:
-                user = self.find_user(db_session, name=get_username(identity))
-            else:
-                user = self.find_user(
-                    db_session, reset_password_token=form.reset_password_token.data
-                )
-            if user:
-                if not self.can_change_password(db_session, user):
-                    # time since last password update was too short
-                    flash(i18n.t("auth.edit_password_rate_limited"))
-                    if not identity:
-                        target_url = unquote(form.url.data) or None
-                        return self.response(
-                            redirect(url_for('login', url=target_url)),
-                            db_session
-                        )
-                    else:
-                        return self.response(
-                            render_template(
+                if identity:
+                    user = self.find_user(db_session, name=get_username(identity))
+                else:
+                    user = self.find_user(
+                        db_session, reset_password_token=form.reset_password_token.data
+                    )
+                if user:
+                    if not self.can_change_password(db_session, user):
+                        # time since last password update was too short
+                        flash(i18n.t("auth.edit_password_rate_limited"))
+                        if not identity:
+                            target_url = unquote(form.url.data) or None
+                            return redirect(url_for('login', url=target_url))
+                        else:
+                            return render_template(
                                 'edit_password.html', form=form, i18n=i18n,
                                 title=i18n.t("auth.edit_password_page_title"),
                                 csrf_token=self.csrf_token()
-                            ),
-                            db_session
+                            )
+
+                    if not self.password_accepted(
+                        db_session, user, form.password.data
+                    ):
+                        # password may not be reused
+
+                        # show message in form
+                        form.password.errors.append(
+                            i18n.t('auth.edit_password_cannot_reuse')
                         )
 
-                if not self.password_accepted(
-                    db_session, user, form.password.data
-                ):
-                    # password may not be reused
+                        if token:
+                            # set hidden field
+                            form.reset_password_token.data = token
 
-                    # show message in form
-                    form.password.errors.append(
-                        i18n.t('auth.edit_password_cannot_reuse')
-                    )
-
-                    if token:
-                        # set hidden field
-                        form.reset_password_token.data = token
-
-                    return self.response(
-                        render_template(
+                        return render_template(
                             'edit_password.html', form=form, i18n=i18n,
                             title=i18n.t("auth.edit_password_page_title"),
                             csrf_token=self.csrf_token()
-                        ),
-                        db_session
-                    )
+                        )
 
-                # save new password
-                user.set_password(form.password.data)
-                # clear token
-                user.reset_password_token = None
-                if user.last_sign_in_at is None:
-                    # set last sign in timestamp after required password change
-                    # to mark as password changed
-                    user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
-                db_session.commit()
+                    # save new password
+                    user.set_password(form.password.data)
+                    # clear token
+                    user.reset_password_token = None
+                    if user.last_sign_in_at is None:
+                        # set last sign in timestamp after required password change
+                        # to mark as password changed
+                        user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
 
-                if self.password_history_active:
-                    # add new entry to password history
-                    self.create_password_history(db_session, user)
+                    if self.password_history_active:
+                        # add new entry to password history
+                        self.create_password_history(db_session, user)
 
-                flash(i18n.t("auth.edit_password_successful"))
-                target_url = unquote(form.url.data) or None
-                if not identity:
-                    return self.response(
-                        redirect(url_for('login', url=target_url)),
-                        db_session
-                    )
+                    flash(i18n.t("auth.edit_password_successful"))
+                    target_url = unquote(form.url.data) or None
+                    if not identity:
+                        return redirect(url_for('login', url=target_url))
+                    else:
+                        return render_template(
+                            'edit_password.html', form=form, i18n=i18n,
+                            title=i18n.t("auth.edit_password_page_title"),
+                            csrf_token=self.csrf_token()
+                        )
                 else:
-                    return self.response(
-                        render_template(
-                            'edit_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.edit_password_page_title"),
-                            csrf_token=self.csrf_token()
-                        ),
-                        db_session
-                    )
-            else:
-                # invalid reset token
-                flash(i18n.t("auth.edit_password_invalid_token"))
-                return self.response(
-                    render_template(
+                    # invalid reset token
+                    flash(i18n.t("auth.edit_password_invalid_token"))
+                    return render_template(
                         'edit_password.html', form=form, i18n=i18n,
                         title=i18n.t("auth.edit_password_page_title"),
                         csrf_token=self.csrf_token()
-                    ),
-                    db_session
-                )
+                    )
 
         if token:
             # set hidden field
@@ -633,19 +581,17 @@ class DBAuth:
             csrf_token=self.csrf_token()
         )
 
-    def require_password_change(self, user, reason, target_url, db_session):
+    def require_password_change(self, user, reason, target_url):
         """Show form for required password change.
 
         :param User user: User instance
         :param str reason: Reason for this required password change
         :param str target_url: URL for redirect
-        :param Session db_session: DB session
         """
         # clear last sign in timestamp and generate reset token
         # to mark as requiring password change
         user.last_sign_in_at = None
         user.reset_password_token = self.generate_token()
-        db_session.commit()
 
         # show password reset form
         form = self.edit_password_form()
@@ -684,17 +630,6 @@ class DBAuth:
         """Return new session for ConfigDB."""
         return self.config_models.session()
 
-    def response(self, response, db_session):
-        """Helper for closing DB session before returning response.
-
-        :param obj response: Response
-        :param Session db_session: DB session
-        """
-        # close session
-        db_session.close()
-
-        return response
-
     def find_user(self, db_session, **kwargs):
         """Find user by filter.
 
@@ -709,11 +644,9 @@ class DBAuth:
         :param int id: User ID
         """
         # create session for ConfigDB
-        db_session = self.db_session()
-        # find user by ID
-        user = self.find_user(db_session, id=id)
-        # close session
-        db_session.close()
+        with self.db_session() as db_session:
+            # find user by ID
+            user = self.find_user(db_session, id=id)
 
         return user
 
@@ -723,21 +656,18 @@ class DBAuth:
         :param str: Password reset token
         """
         # create session for ConfigDB
-        db_session = self.db_session()
-        # find user by password reset token
-        user = self.find_user(db_session, reset_password_token=token)
-        # close session
-        db_session.close()
+        with self.db_session() as db_session:
+            # find user by password reset token
+            user = self.find_user(db_session, reset_password_token=token)
 
         return user is not None
 
-    def __user_is_authorized(self, user, password, db_session):
+    def __user_is_authorized(self, user, password):
         """Check credentials, update user sign in fields and
         return whether user is authorized.
 
         :param User user: User instance
         :param str password: Password
-        :param Session db_session: DB session
         """
         if user is None or user.password_hash is None:
             # invalid username or no password set
@@ -750,7 +680,6 @@ class DBAuth:
                     # counter
                     user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                     user.failed_sign_in_count = 0
-                    db_session.commit()
 
                 return True
             else:
@@ -761,17 +690,15 @@ class DBAuth:
 
             # increase failed login attempts counter
             user.failed_sign_in_count += 1
-            db_session.commit()
 
             return False
 
-    def user_totp_is_valid(self, user, token, db_session):
+    def user_totp_is_valid(self, user, token):
         """Check TOTP token, update user sign in fields and
         return whether user is authorized.
 
         :param User user: User instance
         :param str token: TOTP token
-        :param Session db_session: DB session
         """
         if user is None or not user.totp_secret:
             # invalid user ID or blank TOTP secret
@@ -781,7 +708,6 @@ class DBAuth:
             # update last sign in timestamp and reset failed attempts counter
             user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
             user.failed_sign_in_count = 0
-            db_session.commit()
 
             return True
         else:
@@ -789,7 +715,6 @@ class DBAuth:
 
             # increase failed login attempts counter
             user.failed_sign_in_count += 1
-            db_session.commit()
 
             return False
 
@@ -913,7 +838,6 @@ class DBAuth:
             created_at=datetime.datetime.now(datetime.UTC)
         )
         db_session.add(pw_history)
-        db_session.commit()
 
         return pw_history
 
@@ -929,9 +853,8 @@ class DBAuth:
         if self.password_history_active and expiry_notice != -1:
             # password expiry notice is enabled
             # get days until expiry
-            db_session = self.db_session()
-            days_remaining = self.days_until_password_expiry(db_session, user)
-            db_session.close()
+            with self.db_session() as db_session:
+                days_remaining = self.days_until_password_expiry(db_session, user)
 
             if days_remaining != -1 and days_remaining <= expiry_notice:
                 # remaining days within notice period
