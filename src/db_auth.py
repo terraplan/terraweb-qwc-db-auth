@@ -806,11 +806,18 @@ class DBAuth:
             recipients=[user.email]
         )
         # set message body from template
-        msg.body = render_template(
-            'reset_password_instructions.%s.txt' % i18n.get('locale'),
-            user=user, reset_url=reset_url,
-            csrf_token=self.csrf_token()
-        )
+        try:
+            msg.body = render_template(
+                'reset_password_instructions.%s.txt' % i18n.get('locale'),
+                user=user, reset_url=reset_url,
+                csrf_token=self.csrf_token()
+            )
+        except:
+            msg.body = render_template(
+                'reset_password_instructions.en.txt',
+                user=user, reset_url=reset_url,
+                csrf_token=self.csrf_token()
+            )
 
         # send message
         self.logger.debug(msg)
