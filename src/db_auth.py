@@ -68,6 +68,7 @@ class DBAuth:
 
         config_handler = RuntimeConfig("dbAuth", self.logger)
         config = config_handler.tenant_config(tenant)
+        self.qwc_config_schema = config.get('qwc_config_schema', 'qwc_config')
 
         self.login_logo = config.get('logo_image_url')
         self.login_background = config.get('background_image_url')
@@ -102,7 +103,8 @@ class DBAuth:
 
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(
-            db_engine, db_url, ['password_histories']
+            db_engine, db_url, ['password_histories'],
+            qwc_config_schema=self.qwc_config_schema
         )
         self.User = self.config_models.model('users')
         self.PasswordHistory = self.config_models.model('password_histories')
@@ -116,7 +118,7 @@ class DBAuth:
         if self.password_history_active and self.PasswordHistory is None:
             self.logger.warning(
                 "Could not activate password history. "
-                "Table 'qwc_config.password_histories' is missing."
+                "Table 'password_histories' is missing."
             )
             self.password_history_active = False
 
