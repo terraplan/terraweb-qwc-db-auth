@@ -23,20 +23,6 @@ from qwc_services_core.runtime_config import RuntimeConfig
 from forms import LoginForm, NewPasswordForm, EditPasswordForm, VerifyForm
 
 
-POST_PARAM_LOGIN = os.environ.get("POST_PARAM_LOGIN", default="False")
-if POST_PARAM_LOGIN.lower() in ("f", "false"):
-    POST_PARAM_LOGIN = False
-
-# max number of failed login attempts before sign in is blocked
-MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 20))
-
-# enable two factor authentication using TOTP
-TOTP_ENABLED = os.environ.get('TOTP_ENABLED', 'False').lower() == 'true'
-
-# issuer name for QR code URI
-TOTP_ISSUER_NAME = os.environ.get('TOTP_ISSUER_NAME', 'QWC Services')
-
-
 class DBAuth:
     """DBAuth class
 
@@ -101,6 +87,11 @@ class DBAuth:
             'allow_reuse': config.get('password_allow_reuse', True)
         }
 
+        self.post_param_login = config.get('post_param_login', False)
+        self.max_login_attempts = config.get('max_login_attempts', 20)
+        self.totp_enabled = config.get('totp_enabled', False)
+        self.totp_issuer_name = config.get('totp_issuer_name', 'QWC Services')
+
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(
             db_engine, db_url, ['password_histories'],
@@ -145,7 +136,7 @@ class DBAuth:
         retry_target_url = url_path(request.args.get('url') or None)
         self.logger.debug("Login with target_url `%s`" % target_url)
 
-        if POST_PARAM_LOGIN:
+        if self.post_param_login:
             # Pass additional parameter specified
             req = request.form
             queryvals = {}
@@ -163,7 +154,7 @@ class DBAuth:
         # create session for ConfigDB
         with self.db_session() as db_session, db_session.begin():
 
-            if POST_PARAM_LOGIN:
+            if self.post_param_login:
                 username = req.get(self.USERNAME)
                 password = req.get(self.PASSWORD)
                 if username:
@@ -207,7 +198,7 @@ class DBAuth:
                                 # add initial password history entry if missing
                                 self.create_password_history(db_session, user)
 
-                        if TOTP_ENABLED:
+                        if self.totp_enabled:
                             session['login_uid'] = user.id
                             session['target_url'] = target_url
                             if user.totp_secret:
@@ -275,7 +266,7 @@ class DBAuth:
         :param bool submit: Whether form was submitted
                             (False if shown after login form)
         """
-        if not TOTP_ENABLED or 'login_uid' not in session:
+        if not self.totp_enabled or 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
@@ -300,7 +291,7 @@ class DBAuth:
                 form.token.errors.append(i18n.t('auth.verfication_invalid'))
                 form.token.data = None
 
-            if user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS:
+            if user.failed_sign_in_count >= self.max_login_attempts:
                 self.logger.info("redirect to login after too many login attempts")
                 return redirect(url_for('login'))
 
@@ -331,7 +322,7 @@ class DBAuth:
         :param bool submit: Whether form was submitted
                             (False if shown after login form)
         """
-        if not TOTP_ENABLED or 'login_uid' not in session:
+        if not self.totp_enabled or 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
@@ -394,7 +385,7 @@ class DBAuth:
 
     def qrcode(self):
         """Return TOTP QR code."""
-        if not TOTP_ENABLED or 'login_uid' not in session:
+        if not self.totp_enabled or 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             abort(404)
 
@@ -423,7 +414,7 @@ class DBAuth:
         # generate TOTP URI
         email = user.email or user.name
         uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(
-            email, issuer_name=TOTP_ISSUER_NAME
+            email, issuer_name=self.totp_issuer_name
         )
 
         # generate QR code
@@ -676,8 +667,8 @@ class DBAuth:
             return False
         elif user.check_password(password):
             # valid credentials
-            if user.failed_sign_in_count < MAX_LOGIN_ATTEMPTS:
-                if not TOTP_ENABLED:
+            if user.failed_sign_in_count < self.max_login_attempts:
+                if not self.totp_enabled:
                     # update last sign in timestamp and reset failed attempts
                     # counter
                     user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
