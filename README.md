@@ -166,7 +166,7 @@ Set the `CONFIG_PATH` environment variable to the path containing the service co
 
     export CONFIG_PATH=../qwc-docker/volumes/config
 
-Configure environment:
+Configure development environment:
 
     echo FLASK_ENV=development >.flaskenv
     export MAIL_SUPPRESS_SEND=True
