@@ -16,12 +16,14 @@ import i18n
 from werkzeug.security import check_password_hash
 
 from qwc_services_core.auth import get_username
+from qwc_services_core.cache import ExpiringDict
 from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.config_models import ConfigModels
 from qwc_services_core.runtime_config import RuntimeConfig
 
 from forms import LoginForm, NewPasswordForm, EditPasswordForm, VerifyForm
 
+ip_blacklist = ExpiringDict()
 
 class DBAuth:
     """DBAuth class
@@ -92,6 +94,8 @@ class DBAuth:
         self.totp_enabled = config.get('totp_enabled', False)
         self.totp_enabled_for_admin = config.get('totp_enabled_for_admin', False)
         self.totp_issuer_name = config.get('totp_issuer_name', 'QWC Services')
+        self.ip_blacklist_duration = config.get('ip_blacklist_duration', 300)
+        self.ip_blacklist_max_attempt_count = config.get('ip_blacklist_max_attempt_count', 10)
 
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(
@@ -700,6 +704,14 @@ class DBAuth:
         :param User user: User instance
         :param str password: Password
         """
+        # Check if IP blacklisted
+        if self.ip_blacklist_duration > 0:
+            entry = ip_blacklist.lookup(request.remote_addr)
+            count = entry['value'] if entry else 0
+            if count >= self.ip_blacklist_max_attempt_count:
+                self.logger.info("IP %s is blacklisted with %s attempts" % (request.remote_addr, count))
+                return False, i18n.t('auth.ip_blacklisted')
+
         if user is None or user.password_hash is None:
             # invalid username or no password set
             return False, i18n.t('auth.auth_failed')
@@ -718,6 +730,13 @@ class DBAuth:
                 return False, i18n.t('auth.account_locked')
         else:
             # invalid password
+
+            # add to ip blacklist
+            if self.ip_blacklist_duration > 0:
+                entry = ip_blacklist.lookup(request.remote_addr)
+                count = entry['value'] if entry else 0
+                ip_blacklist.set(request.remote_addr, count + 1, self.ip_blacklist_duration)
+                self.logger.info("Attempt count for IP %s: %s" % (request.remote_addr, count + 1))
 
             # increase failed login attempts counter
             user.failed_sign_in_count += 1

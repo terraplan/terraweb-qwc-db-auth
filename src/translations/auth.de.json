@@ -9,6 +9,7 @@
     "auth_failed": "Ungültiger Benutzername oder ungültiges Passwort",
     "account_locked": "Konto gesperrt",
     "validation_error": "Überprüfung des Formulars fehlgeschlagen",
+    "ip_blacklisted": "IP-Addresse ist vorübergehend blockiert",
 
     "login_link": "Anmeldung",
 

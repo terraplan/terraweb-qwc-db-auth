@@ -9,6 +9,7 @@
     "auth_failed": "Identifiant ou mot de passe invalide",
     "account_locked": "Compte bloqué",
     "validation_error": "Erreur dans le formulaire",
+    "ip_blacklisted": "Adresse IP temporairement bloquée",
 
     "login_link": "Se connecter",
 

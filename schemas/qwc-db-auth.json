@@ -123,6 +123,14 @@
         "totp_issuer_name": {
           "description": "Issuer name for QR code URI. Default: 'QWC Services'",
           "type": "string"
+        },
+        "ip_blacklist_duration": {
+          "description": "How many seconds an IP will remain in the blacklist. See also ip_blacklist_max_attempt_count. Default: 300",
+          "type": "integer"
+        },
+        "ip_blacklist_max_attempt_count": {
+          "description": "After how many failed login attempts an IP will be blacklisted. Should be less than max_login_attempts. See also ip_blacklist_duration. Default: 10",
+          "type": "integer"
         }
       },
       "required": [

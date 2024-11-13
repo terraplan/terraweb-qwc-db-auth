@@ -9,6 +9,7 @@
     "auth_failed": "Invalid username or password",
     "account_locked": "Account locked",
     "validation_error": "Form validation error",
+    "ip_blacklisted": "IP address is temporarily blacklisted",
 
     "login_link": "Sign In",
 
