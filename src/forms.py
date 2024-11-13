@@ -20,6 +20,7 @@ class VerifyForm(FlaskForm):
 
 
 class NewPasswordForm(FlaskForm):
+    user = StringField('User', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
 
 

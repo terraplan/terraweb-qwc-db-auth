@@ -5,19 +5,19 @@
     "login_button": "Anmelden",
     "username_placeholder": "Benutzername",
     "password_placeholder": "Passwort",
-    "forgot_password": "Passwort vergessen?",
+    "forgot_password": "Passwort ändern / Konto entsperren",
     "auth_failed": "Ungültiger Benutzername oder ungültiges Passwort",
     "account_locked": "Konto gesperrt",
     "validation_error": "Überprüfung des Formulars fehlgeschlagen",
 
     "login_link": "Anmeldung",
 
-    "new_password_page_title": "Passwort vergessen?",
-    "new_password_form_title": "Anweisungen zum Zurücksetzen des Passworts senden",
+    "new_password_page_title": "Passwort ändern",
+    "new_password_form_title": "Anweisungen zum Ändern des Passworts senden",
     "new_password_button": "Anweisungen senden",
     "email_placeholder": "E-Mail",
 
-    "reset_message": "Sie erhalten ein E-Mail mit den Anweisungen zum Zurücksetzen des Passworts in ein paar Minuten",
+    "reset_message": "Falls ein Konto gefunden wurde, erhalten Sie ein E-Mail mit den Anweisungen zum Ändern des Passworts.",
     "reset_mail_subject": "Anweisungen zum Zurücksetzen des Passworts",
     "reset_mail_failed": "Senden der Anweisungen zum Zurücksetzen des Passworts fehlgeschlagen",
 
@@ -35,6 +35,9 @@
     "edit_password_invalid_token": "Ungültiges Token zum Zurücksetzen des Passworts",
     "edit_password_cannot_reuse": "Dieses Passwort wurde für Ihr Benutzerkonto schon einmal benutzt",
     "edit_password_rate_limited": "Sie können Ihr Passwort noch nicht ändern",
+
+    "account_unlocked": "Konto wurde entsprerrt",
+    "invalid_unlock_token": "Ungültiges Token zum Entsperren des Kontos",
 
     "qrcode_page_title": "Einrichtung der Zwei-Faktor-Authentifizierung",
     "qrcode_line1": "Scannen Sie den folgenden QR-Code mit Ihrer OTP-App",

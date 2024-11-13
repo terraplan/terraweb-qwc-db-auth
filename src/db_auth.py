@@ -446,8 +446,9 @@ class DBAuth:
             # create session for ConfigDB
             with self.db_session() as db_session, db_session.begin():
 
+                entered_user = form.user.data
                 user = self.find_user(db_session, email=form.email.data)
-                if user:
+                if user and user.name == entered_user:
                     # generate and save reset token
                     user.reset_password_token = self.generate_token()
 
@@ -537,6 +538,8 @@ class DBAuth:
                     user.set_password(form.password.data)
                     # clear token
                     user.reset_password_token = None
+                    # Reset signing fail count
+                    user.failed_sign_in_count = 0
                     if user.last_sign_in_at is None:
                         # set last sign in timestamp after required password change
                         # to mark as password changed
@@ -619,6 +622,21 @@ class DBAuth:
             self.password_constraints['constraints_message'],
             meta=wft_locales()
         )
+
+    def unlock_account(self, token):
+        """Unlocks an account by token."""
+
+        with self.db_session() as db_session, db_session.begin():
+            # find user by password reset token
+            user = self.find_user(db_session, reset_password_token=token)
+
+            if user:
+                user.failed_sign_in_count = 0
+                user.reset_password_token = None
+                flash(i18n.t("auth.account_unlocked"))
+            else:
+                flash(i18n.t("auth.invalid_unlock_token"))
+        return redirect(url_for('login'))
 
     def db_session(self):
         """Return new session for ConfigDB."""
@@ -797,6 +815,10 @@ class DBAuth:
             'edit_password', reset_password_token=user.reset_password_token,
             _external=True
         )
+        unlock_url = url_for(
+            'unlock_account', reset_password_token=user.reset_password_token,
+            _external=True
+        )
 
         msg = Message(
             i18n.t('auth.reset_mail_subject'),
@@ -807,6 +829,7 @@ class DBAuth:
             msg.body = render_template(
                 'reset_password_instructions.%s.txt' % i18n.get('locale'),
                 user=user, reset_url=reset_url,
+                unlock_url=unlock_url,
                 csrf_token=self.csrf_token()
             )
         except:

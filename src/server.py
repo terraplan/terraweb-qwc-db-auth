@@ -136,6 +136,11 @@ def edit_password():
     token = request.args.get('reset_password_token')
     return db_auth_handler().edit_password(token, get_identity())
 
+@app.route('/unlock', methods=['GET'])
+def unlock_account():
+    token = request.args.get('reset_password_token')
+    return db_auth_handler().unlock_account(token)
+
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     return redirect(request.url)

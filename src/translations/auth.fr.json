@@ -3,21 +3,21 @@
     "login_page_title": "Authentification",
     "login_form_title": "Connexion",
     "login_button": "Se connecter",
-    "username_placeholder": "identifiant",
-    "password_placeholder": "mot de passe",
-    "forgot_password": "Mot de passe oublié?",
+    "username_placeholder": "Identifiant",
+    "password_placeholder": "Mot de passe",
+    "forgot_password": "Modifier mot de passe / Debloquer compte",
     "auth_failed": "Identifiant ou mot de passe invalide",
     "account_locked": "Compte bloqué",
     "validation_error": "Erreur dans le formulaire",
 
     "login_link": "Se connecter",
 
-    "new_password_page_title": "Mot de passe oublié?",
-    "new_password_form_title": "Envoyer les instructions pour réinitialiser mon mot de passe",
+    "new_password_page_title": "Changer le mot de passe",
+    "new_password_form_title": "Envoyer les instructions pour changer le mot de passe",
     "new_password_button": "Envoyer",
     "email_placeholder": "Email",
 
-    "reset_message": "Vous allez recevoir par mail les instructions pour réinitialiser votre mot de passe.",
+    "reset_message": "Si un compte correspondant a été trouvé, vous allez recevoir par mail les instructions pour changer votre mot de passe.",
     "reset_mail_subject": "Réinitialisation de votre mot de passe",
     "reset_mail_failed": "Echec dans l'envoi des instructions de réinitialisation du mot de passe",
 
@@ -35,6 +35,9 @@
     "edit_password_invalid_token": "Le jeton de réinitialisation du mot de passe est invalide",
     "edit_password_cannot_reuse": "Ce mot de passe est identique à un ancien",
     "edit_password_rate_limited": "Vous devez attendre plus longtemps afin de pouvoir changer votre mot de passe",
+
+    "account_unlocked": "Compte débloqué",
+    "invalid_unlock_token": "Jeton de déblocage invalide",
 
     "qrcode_page_title": "Configuration de l'authentification Deux-Facteurs",
     "qrcode_line1": "Scannez le QR code avec votre application",
