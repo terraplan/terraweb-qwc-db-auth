@@ -109,7 +109,7 @@
           "type": "boolean"
         },
         "max_login_attempts": {
-          "description": "Maximum login attempts before login is blocked. Default: false",
+          "description": "Maximum login attempts before login is blocked. Default: 20",
           "type": "integer"
         },
         "totp_enabled": {
