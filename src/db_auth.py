@@ -90,6 +90,7 @@ class DBAuth:
         self.post_param_login = config.get('post_param_login', False)
         self.max_login_attempts = config.get('max_login_attempts', 20)
         self.totp_enabled = config.get('totp_enabled', False)
+        self.totp_enabled_for_admin = config.get('totp_enabled_for_admin', False)
         self.totp_issuer_name = config.get('totp_issuer_name', 'QWC Services')
 
         db_engine = DatabaseEngine()
@@ -200,7 +201,7 @@ class DBAuth:
                                 # add initial password history entry if missing
                                 self.create_password_history(db_session, user)
 
-                        if self.totp_enabled:
+                        if self.__totp_is_enabled(user):
                             session['login_uid'] = user.id
                             session['target_url'] = target_url
                             if user.totp_secret:
@@ -254,6 +255,12 @@ class DBAuth:
                     abort(401)
         abort(401)
 
+    def __totp_is_enabled(self, user):
+        """ Returns whether totp is enabled for the specified user
+        :param user User: The user
+        """
+        return self.totp_enabled or (user and user.name == self.DEFAULT_ADMIN_USER and self.totp_enabled_for_admin)
+
     def verify(self):
         """Handle submit of form for TOTP verification token."""
         # create session for ConfigDB
@@ -267,13 +274,17 @@ class DBAuth:
         :param bool submit: Whether form was submitted
                             (False if shown after login form)
         """
-        if not self.totp_enabled or 'login_uid' not in session:
+        if 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         user = self.find_user(db_session, id=session.get('login_uid', None))
         if user is None:
             self.logger.warning("user not found")
+            return redirect(url_for('login'))
+
+        if not self.__totp_is_enabled(user):
+            self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         form = VerifyForm(meta=wft_locales())
@@ -323,13 +334,17 @@ class DBAuth:
         :param bool submit: Whether form was submitted
                             (False if shown after login form)
         """
-        if not self.totp_enabled or 'login_uid' not in session:
+        if 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         user = self.find_user(db_session, id=session.get('login_uid', None))
         if user is None:
             # user not found
+            return redirect(url_for('login'))
+
+        if not self.__totp_is_enabled(user):
+            self.logger.warning("TOTP not enabled or not in login process")
             return redirect(url_for('login'))
 
         totp_secret = session.get('totp_secret', None)
@@ -386,7 +401,7 @@ class DBAuth:
 
     def qrcode(self):
         """Return TOTP QR code."""
-        if not self.totp_enabled or 'login_uid' not in session:
+        if 'login_uid' not in session:
             self.logger.warning("TOTP not enabled or not in login process")
             abort(404)
 
@@ -411,6 +426,10 @@ class DBAuth:
         if user is None:
             # user not found
             abort(404)
+
+        if not self.__totp_is_enabled(user):
+            self.logger.warning("TOTP not enabled or not in login process")
+            return redirect(url_for('login'))
 
         # generate TOTP URI
         email = user.email or user.name
@@ -687,7 +706,7 @@ class DBAuth:
         elif user.check_password(password):
             # valid credentials
             if user.failed_sign_in_count < self.max_login_attempts:
-                if not self.totp_enabled:
+                if not self.__totp_is_enabled(user):
                     # update last sign in timestamp and reset failed attempts
                     # counter
                     user.last_sign_in_at = datetime.datetime.now(datetime.UTC)

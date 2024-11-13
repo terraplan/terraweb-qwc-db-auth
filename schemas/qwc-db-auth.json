@@ -116,6 +116,10 @@
           "description": "Enable two factor authentication using TOTP. Default: false",
           "type": "boolean"
         },
+        "totp_enabled_for_admin": {
+          "description": "Whether to enable two-factor authentication using TOTP for admin. Default: false",
+          "type": "boolean"
+        },
         "totp_issuer_name": {
           "description": "Issuer name for QR code URI. Default: 'QWC Services'",
           "type": "string"
