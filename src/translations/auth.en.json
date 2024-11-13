@@ -7,6 +7,7 @@
     "password_placeholder": "password",
     "forgot_password": "Forgot your password?",
     "auth_failed": "Invalid username or password",
+    "account_locked": "Account locked",
     "validation_error": "Form validation error",
 
     "login_link": "Sign In",

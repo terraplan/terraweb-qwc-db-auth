@@ -159,11 +159,12 @@ class DBAuth:
                 password = req.get(self.PASSWORD)
                 if username:
                     user = self.find_user(db_session, name=username)
-                    if self.__user_is_authorized(user, password):
+                    login_success, login_fail_reason = self.__user_is_authorized(user, password)
+                    if login_success:
                         return self.__login_response(user, target_url)
                     else:
                         self.logger.info(
-                            "POST_PARAM_LOGIN: Invalid username or password")
+                            "POST_PARAM_LOGIN: %s" % login_fail_reason)
                         return redirect(url_for('login', url=retry_target_url))
 
             form = LoginForm(meta=wft_locales())
@@ -187,7 +188,8 @@ class DBAuth:
                 if password_has_expired:
                     force_password_change = True
 
-                if self.__user_is_authorized(user, form.password.data):
+                login_success, login_fail_reason = self.__user_is_authorized(user, form.password.data)
+                if login_success:
                     if not force_password_change:
                         if self.password_history_active:
                             # check if any password history is present
@@ -226,8 +228,7 @@ class DBAuth:
                             user, reason, target_url
                         )
                 else:
-                    form.username.errors.append(i18n.t('auth.auth_failed'))
-                    form.password.errors.append(i18n.t('auth.auth_failed'))
+                    form.password.errors.append(login_fail_reason)
                     # Maybe different message when
                     # user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS
 
@@ -244,12 +245,12 @@ class DBAuth:
         if username:
             with self.db_session() as db_session, db_session.begin():
                 user = self.find_user(db_session, name=username)
-                if self.__user_is_authorized(user, password):
+                login_success, login_fail_reason = self.__user_is_authorized(user, password)
+                if login_success:
                     # access_token = create_access_token(identity=username)
                     return jsonify({"identity": username})
                 else:
-                    self.logger.info(
-                        "verify_login: Invalid username or password")
+                    self.logger.info("verify_login: %s" % login_fail_reason)
                     abort(401)
         abort(401)
 
@@ -664,7 +665,7 @@ class DBAuth:
         """
         if user is None or user.password_hash is None:
             # invalid username or no password set
-            return False
+            return False, i18n.t('auth.auth_failed')
         elif user.check_password(password):
             # valid credentials
             if user.failed_sign_in_count < self.max_login_attempts:
@@ -674,17 +675,20 @@ class DBAuth:
                     user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                     user.failed_sign_in_count = 0
 
-                return True
+                return True, None
             else:
                 # block sign in due to too many login attempts
-                return False
+                return False, i18n.t('auth.account_locked')
         else:
             # invalid password
 
             # increase failed login attempts counter
             user.failed_sign_in_count += 1
 
-            return False
+            if user.failed_sign_in_count < self.max_login_attempts:
+                return False, i18n.t('auth.auth_failed')
+            else:
+                return False, i18n.t('auth.account_locked')
 
     def user_totp_is_valid(self, user, token):
         """Check TOTP token, update user sign in fields and

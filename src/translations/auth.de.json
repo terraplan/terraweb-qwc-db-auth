@@ -7,6 +7,7 @@
     "password_placeholder": "Passwort",
     "forgot_password": "Passwort vergessen?",
     "auth_failed": "Ungültiger Benutzername oder ungültiges Passwort",
+    "account_locked": "Konto gesperrt",
     "validation_error": "Überprüfung des Formulars fehlgeschlagen",
 
     "login_link": "Anmeldung",

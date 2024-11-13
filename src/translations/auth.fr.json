@@ -7,6 +7,7 @@
     "password_placeholder": "mot de passe",
     "forgot_password": "Mot de passe oublié?",
     "auth_failed": "Identifiant ou mot de passe invalide",
+    "account_locked": "Compte bloqué",
     "validation_error": "Erreur dans le formulaire",
 
     "login_link": "Se connecter",
