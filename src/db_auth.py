@@ -96,6 +96,7 @@ class DBAuth:
         self.totp_issuer_name = config.get('totp_issuer_name', 'QWC Services')
         self.ip_blacklist_duration = config.get('ip_blacklist_duration', 300)
         self.ip_blacklist_max_attempt_count = config.get('ip_blacklist_max_attempt_count', 10)
+        self.force_password_change_first_login = config.get('force_password_change_first_login', False)
 
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(
@@ -184,8 +185,9 @@ class DBAuth:
                 # force password change on first sign in of default admin user
                 # NOTE: user.last_sign_in_at will be set after successful auth
                 force_password_change = (
-                    user and user.name == self.DEFAULT_ADMIN_USER
-                    and user.last_sign_in_at is None
+                    user and user.last_sign_in_at is None and (
+                        user.name == self.DEFAULT_ADMIN_USER or self.force_password_change_first_login
+                    )
                 )
 
                 # check if password has expired

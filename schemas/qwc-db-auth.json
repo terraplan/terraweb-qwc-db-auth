@@ -131,6 +131,10 @@
         "ip_blacklist_max_attempt_count": {
           "description": "After how many failed login attempts an IP will be blacklisted. Should be less than max_login_attempts. See also ip_blacklist_duration. Default: 10",
           "type": "integer"
+        },
+        "force_password_change_first_login": {
+          "description": "Whether to force users to change the password on first login. Default: `false`",
+          "type": "boolean"
         }
       },
       "required": [
