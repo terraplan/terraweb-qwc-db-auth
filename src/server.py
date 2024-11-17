@@ -26,6 +26,10 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.environ.get(
 app.config['SESSION_COOKIE_SECURE'] = app.config['JWT_COOKIE_SECURE']
 app.config['SESSION_COOKIE_SAMESITE'] = app.config['JWT_COOKIE_SAMESITE']
 
+# For login CSRF protection, use WTF CSRF protection (as no JWT is available before login)
+os.environ['JWT_COOKIE_CSRF_PROTECT'] = 'False'
+app.config['WTF_CSRF_ENABLED'] = True
+
 jwt = auth_manager(app)
 app.secret_key = app.config['JWT_SECRET_KEY']
 
@@ -35,9 +39,7 @@ SUPPORTED_LANGUAGES = ['en', 'de', 'fr']
 # *Enable* WTForms built-in messages translation
 # https://wtforms.readthedocs.io/en/2.3.x/i18n/
 app.config['WTF_I18N_ENABLED'] = False
-# WTF CSRF protection conflicts with JWT CSRF protection
-# https://github.com/vimalloc/flask-jwt-extended/issues/15
-app.config['WTF_CSRF_ENABLED'] = False
+
 
 # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 login = LoginManager(app)
@@ -89,7 +91,6 @@ def load_user(id):
 
 
 @app.route('/login', methods=['GET', 'POST'])
-@optional_auth
 def login():
     return db_auth_handler().login()
 

@@ -128,14 +128,6 @@ class DBAuth:
         prefix = self.app.session_interface.get_cookie_path(self.app)
         return prefix.rstrip('/') + '/'
 
-    def csrf_token(self):
-        """ Inject CSRF token """
-        token = (get_jwt() or {}).get("csrf")
-        if token:
-            return token
-        else:
-            return ""
-
     def login(self):
         """Authorize user and sign in."""
         target_url = url_path(request.args.get('url') or self.tenant_base())
@@ -241,8 +233,7 @@ class DBAuth:
 
         return render_template('login.html', form=form, i18n=i18n,
                             title=i18n.t("auth.login_page_title"),
-                            login_hint=self.login_hint,
-                            csrf_token=self.csrf_token())
+                            login_hint=self.login_hint)
 
     def verify_login(self):
         """Verify user login (e.g. from basic auth header)."""
@@ -314,8 +305,7 @@ class DBAuth:
                 return redirect(url_for('login'))
 
         return render_template('verify.html', form=form, i18n=i18n,
-                               title=i18n.t("auth.verify_page_title"),
-                               csrf_token=self.csrf_token())
+                               title=i18n.t("auth.verify_page_title"))
 
     def logout(self, identity):
         """Sign out."""
@@ -393,8 +383,7 @@ class DBAuth:
         resp = make_response(render_template(
             'qrcode.html', form=form, i18n=i18n,
             title=i18n.t("auth.qrcode_page_title"),
-            totp_secret=totp_secret,
-            csrf_token=self.csrf_token()
+            totp_secret=totp_secret
         ))
         # do not cache in browser
         resp.headers.set(
@@ -488,8 +477,7 @@ class DBAuth:
                         flash(i18n.t("auth.reset_mail_failed"))
                         return render_template(
                             'new_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.new_password_page_title"),
-                            csrf_token=self.csrf_token()
+                            title=i18n.t("auth.new_password_page_title")
                         )
                 else:
                     self.logger.info("User lookup failed")
@@ -500,8 +488,7 @@ class DBAuth:
 
         return render_template(
             'new_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.new_password_page_title"),
-            csrf_token=self.csrf_token()
+            title=i18n.t("auth.new_password_page_title")
         )
 
     def edit_password(self, token, identity=None):
@@ -535,8 +522,7 @@ class DBAuth:
                         else:
                             return render_template(
                                 'edit_password.html', form=form, i18n=i18n,
-                                title=i18n.t("auth.edit_password_page_title"),
-                                csrf_token=self.csrf_token()
+                                title=i18n.t("auth.edit_password_page_title")
                             )
 
                     if not self.password_accepted(
@@ -555,8 +541,7 @@ class DBAuth:
 
                         return render_template(
                             'edit_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.edit_password_page_title"),
-                            csrf_token=self.csrf_token()
+                            title=i18n.t("auth.edit_password_page_title")
                         )
 
                     # save new password
@@ -581,16 +566,14 @@ class DBAuth:
                     else:
                         return render_template(
                             'edit_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.edit_password_page_title"),
-                            csrf_token=self.csrf_token()
+                            title=i18n.t("auth.edit_password_page_title")
                         )
                 else:
                     # invalid reset token
                     flash(i18n.t("auth.edit_password_invalid_token"))
                     return render_template(
                         'edit_password.html', form=form, i18n=i18n,
-                        title=i18n.t("auth.edit_password_page_title"),
-                        csrf_token=self.csrf_token()
+                        title=i18n.t("auth.edit_password_page_title")
                     )
 
         if token:
@@ -599,8 +582,7 @@ class DBAuth:
 
         return render_template(
             'edit_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.edit_password_page_title"),
-            csrf_token=self.csrf_token()
+            title=i18n.t("auth.edit_password_page_title")
         )
 
     def require_password_change(self, user, reason, target_url):
@@ -633,8 +615,7 @@ class DBAuth:
         flash(i18n.t('auth.edit_password_message'))
         return render_template(
             'edit_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.edit_password_page_title"),
-            csrf_token=self.csrf_token()
+            title=i18n.t("auth.edit_password_page_title")
         )
 
     def edit_password_form(self):
@@ -819,13 +800,11 @@ class DBAuth:
                 'notification.html', form=form, i18n=i18n,
                 title=i18n.t("auth.notification_page_title"),
                 message=i18n.t("auth.notification_expiry_notice", days=days),
-                target_url=target_url,
-                csrf_token=self.csrf_token()
+                target_url=target_url
             )
             resp = make_response(page)
 
-        # Set the JWTs and the CSRF double submit protection cookies
-        # in this response
+        # Set the JWTs in this response
         set_access_cookies(resp, access_token)
 
         return resp
@@ -869,14 +848,12 @@ class DBAuth:
             msg.body = render_template(
                 'reset_password_instructions.%s.txt' % i18n.get('locale'),
                 user=user, reset_url=reset_url,
-                unlock_url=unlock_url,
-                csrf_token=self.csrf_token()
+                unlock_url=unlock_url
             )
         except:
             msg.body = render_template(
                 'reset_password_instructions.en.txt',
-                user=user, reset_url=reset_url,
-                csrf_token=self.csrf_token()
+                user=user, reset_url=reset_url
             )
 
         # send message

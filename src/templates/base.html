@@ -17,8 +17,7 @@
         {% if form.background %}
         <div class="form-background" style="background-image: url('{{form.background}}');">
         {% endif %}
-        {% set form_errors = form.errors.get('csrf_token', []) if form else [] %}
-        {% with messages = get_flashed_messages() + form_errors %}
+        {% with messages = get_flashed_messages() %}
         {% if messages %}
         <ul>
             {% for message in messages %}
