@@ -25,9 +25,6 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.environ.get(
     'JWT_ACCESS_TOKEN_EXPIRES', 12*3600))
 app.config['SESSION_COOKIE_SECURE'] = app.config['JWT_COOKIE_SECURE']
 app.config['SESSION_COOKIE_SAMESITE'] = app.config['JWT_COOKIE_SAMESITE']
-
-# For login CSRF protection, use WTF CSRF protection (as no JWT is available before login)
-os.environ['JWT_COOKIE_CSRF_PROTECT'] = 'False'
 app.config['WTF_CSRF_ENABLED'] = True
 
 jwt = auth_manager(app)
