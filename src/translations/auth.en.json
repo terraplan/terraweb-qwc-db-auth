@@ -17,6 +17,7 @@
     "new_password_form_title": "Send password change instructions",
     "new_password_button": "Send instructions",
     "email_placeholder": "Email",
+    "new_password_contact_admin": "Please contact the administrator to reset your password or to unlock your account.",
 
     "reset_message": "If a matching account was found, you will receive an email with instructions on how to change your password.",
     "reset_mail_subject": "Reset password instructions",

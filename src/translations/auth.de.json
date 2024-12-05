@@ -17,6 +17,7 @@
     "new_password_form_title": "Anweisungen zum Ändern des Passworts senden",
     "new_password_button": "Anweisungen senden",
     "email_placeholder": "E-Mail",
+    "new_password_contact_admin": "Bitte wenden Sie sich an den Administrator, um Ihr Passwort zurückzusetzen oder Ihr Konto freizuschalten.",
 
     "reset_message": "Falls ein Konto gefunden wurde, erhalten Sie ein E-Mail mit den Anweisungen zum Ändern des Passworts.",
     "reset_mail_subject": "Anweisungen zum Zurücksetzen des Passworts",

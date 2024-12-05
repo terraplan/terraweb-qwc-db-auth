@@ -10,6 +10,7 @@ from flask_login import current_user, login_user, logout_user
 from flask_jwt_extended import create_access_token, create_refresh_token, \
     set_access_cookies, unset_jwt_cookies, get_jwt
 from flask_mail import Message
+from flask_wtf import FlaskForm
 import pyotp
 import qrcode
 import i18n
@@ -451,6 +452,13 @@ class DBAuth:
 
     def new_password(self):
         """Show form and send reset password instructions."""
+        if not os.environ.get('MAIL_USERNAME'):
+            form = FlaskForm()
+            return render_template(
+                'new_password_contact_admin.html', form=form, i18n=i18n,
+                title=i18n.t("auth.new_password_page_title")
+            )
+
         form = NewPasswordForm(meta=wft_locales())
         form.logo = self.login_logo
         form.background = self.login_background

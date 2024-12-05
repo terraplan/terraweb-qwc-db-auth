@@ -17,6 +17,7 @@
     "new_password_form_title": "Envoyer les instructions pour changer le mot de passe",
     "new_password_button": "Envoyer",
     "email_placeholder": "Email",
+    "new_password_contact_admin": "Veuillez contacter l'administrateur pour réinitialiser votre mot de passe ou déverrouiller votre compte.",
 
     "reset_message": "Si un compte correspondant a été trouvé, vous allez recevoir par mail les instructions pour changer votre mot de passe.",
     "reset_mail_subject": "Réinitialisation de votre mot de passe",
