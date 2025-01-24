@@ -150,17 +150,9 @@ Endpoints:
 Development
 -----------
 
-Create a virtual environment:
+Install dependencies:
 
-    python3 -m venv .venv
-
-Activate virtual environment:
-
-    source .venv/bin/activate
-
-Install requirements:
-
-    pip install -r requirements.txt
+    uv sync
 
 Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
 
@@ -174,4 +166,4 @@ Configure development environment:
 
 Start local service:
 
-     python src/server.py
+     uv run src/server.py
