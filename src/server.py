@@ -67,9 +67,8 @@ mail_config_from_env(app)
 mail = Mail(app)
 
 tenant_handler = TenantHandler(app.logger)
-
 app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
-app.session_interface = TenantSessionInterface(os.environ)
+app.session_interface = TenantSessionInterface()
 
 
 def db_auth_handler():
