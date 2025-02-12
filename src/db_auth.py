@@ -157,6 +157,7 @@ class DBAuth:
                 username = req.get(self.USERNAME)
                 password = req.get(self.PASSWORD)
                 if username:
+                    self.logger.debug("Attempting to login via POST params as %s" % username)
                     user = self.find_user(db_session, name=username)
                     login_success, login_fail_reason = self.__user_is_authorized(user, password)
                     if login_success:
@@ -173,6 +174,7 @@ class DBAuth:
             form.terms_url = self.terms_url
             form.favicon = self.favicon
             if form.validate_on_submit():
+                self.logger.debug("Attempting to login via form as %s" % form.username.data)
                 user = self.find_user(db_session, name=form.username.data)
 
                 # force password change on first sign in of default admin user
@@ -705,6 +707,7 @@ class DBAuth:
 
         if user is None or user.password_hash is None:
             # invalid username or no password set
+            self.logger.debug("Invalid username or no password set for user")
             return False, i18n.t('auth.auth_failed')
         elif user.check_password(password):
             # valid credentials
@@ -715,9 +718,11 @@ class DBAuth:
                     user.last_sign_in_at = datetime.datetime.now(datetime.UTC)
                     user.failed_sign_in_count = 0
 
+                self.logger.debug("User is authorized")
                 return True, None
             else:
                 # block sign in due to too many login attempts
+                self.logger.debug("User is authorized but account is locked")
                 return False, i18n.t('auth.account_locked')
         else:
             # invalid password
@@ -733,8 +738,10 @@ class DBAuth:
             user.failed_sign_in_count += 1
 
             if user.failed_sign_in_count < self.max_login_attempts:
+                self.logger.debug("User is not authorized")
                 return False, i18n.t('auth.auth_failed')
             else:
+                self.logger.debug("User is not authorized, account is locked due to too many attempts")
                 return False, i18n.t('auth.account_locked')
 
     def user_totp_is_valid(self, user, token):
