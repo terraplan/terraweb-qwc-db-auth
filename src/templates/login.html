@@ -1,53 +1,45 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <form action="" method="post" autocomplete="off">
+    <form class="login-form" action="" method="post" autocomplete="off">
         {{ form.hidden_tag() }}
-        <div class="login">
-            <div class="login-screen">
-                <div class="app-title">
-                    {% if form.logo %}
-                        <img class="app-logo" src="{{form.logo}}" alt="logo" />
-                    {% endif %}
-                    <h1>{{ i18n.t('auth.login_form_title') }}</h1>
-                </div>
-     
-                <div class="login-form">
-                    {% if login_hint != "" and login_hint != None %}
-                    <div class="control-group login-hint">
-                        <span>{{ login_hint|safe }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="control-group">
-                    <input type="text" class="login-field" value="" 
-                           placeholder="{{ i18n.t('auth.username_placeholder') }}" name="username" autofocus="">
-                    <label class="login-field-icon fui-user" for="login-name"></label>
-                    {% for error in form.username.errors %}
-                    <span style="color: red;">[{{ error }}]</span>
-                    {% endfor %}
-                    </div>
-     
-                    <div class="control-group">
-                    <input type="password" class="login-field" value=""
-                           placeholder="{{ i18n.t('auth.password_placeholder') }}" name="password">
-                    <label class="login-field-icon fui-lock" for="login-pass"></label>
-                    {% for error in form.password.errors %}
-                    <span style="color: red;">[{{ error }}]</span>
-                    {% endfor %}
-                    </div>
-     
-                    <input type="submit" value="{{ i18n.t('auth.login_button') }}"
-                           class="btn btn-primary btn-large btn-block" >
-                    <br>
-                </div>
+        <div class="login-form-title">
+            {% if form.logo %}
+                <img class="app-logo" src="{{form.logo}}" alt="logo" />
+            {% endif %}
+            <h1>{{ i18n.t('auth.login_form_title') }}</h1>
+        </div>
 
-                <div>
-                    <a href="{{ url_for('new_password') }}" class="login-link">{{ i18n.t('auth.forgot_password') }}</a>
-                    {% if form.terms_url %}
-                    <a href="{{form.terms_url}}" class="login-link">Terms and conditions</a>
-                    {% endif %}
-                </div>
+        <div class="login-form-fields">
+            {% if login_hint != "" and login_hint != None %}
+            <div class="control-group login-hint">
+                <span>{{ login_hint|safe }}</span>
             </div>
+            {% endif %}
+            <div class="control-group">
+            <input type="text" class="login-field" value=""
+                    placeholder="{{ i18n.t('auth.username_placeholder') }}" name="username" autofocus="">
+            {% for error in form.username.errors %}
+            <div style="color: red;">[{{ error }}]</div>
+            {% endfor %}
+            </div>
+
+            <div class="control-group">
+            <input type="password" class="login-field" value=""
+                    placeholder="{{ i18n.t('auth.password_placeholder') }}" name="password">
+            {% for error in form.password.errors %}
+            <div style="color: red;">[{{ error }}]</div>
+            {% endfor %}
+            </div>
+
+            <button class="button" type="submit">{{ i18n.t('auth.login_button') }}</button>
+        </div>
+
+        <div>
+            <a href="{{ url_for('new_password') }}" class="login-form-link">{{ i18n.t('auth.forgot_password') }}</a>
+            {% if form.terms_url %}
+            <a href="{{form.terms_url}}" class="login-form-link">Terms and conditions</a>
+            {% endif %}
         </div>
     </form>
 {% endblock %}

@@ -1,21 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>{{ i18n.t('auth.notification_page_title') }}</h1>
-    <form action="#" method="get">
-        <div class="login notification">
-            <div class="login-screen">
-                <div class="app-title">
-                    <h1>{{ i18n.t('auth.notification_form_title') }}</h1>
-                </div>
+    <form class="login-form" action="{{ target_url }}" method="get">
+        <div class="login-form-title">
+            <h1>{{ i18n.t('auth.notification_form_title') }}</h1>
+        </div>
 
-                <div class="login-form">
-                    <p>{{ message }}</p>
-
-                    <a href="{{ target_url }}" role="button" class="btn btn-default btn-large btn-block">{{ i18n.t('auth.notification_continue_button') }}</a>
-                    <br>
-                </div>
-            </div>
+        <div class="login-form-fields">
+            <p>{{ message }}</p>
+            <button class="button" type="submit">{{ i18n.t('auth.notification_continue_button') }}</button>
         </div>
     </form>
 {% endblock %}

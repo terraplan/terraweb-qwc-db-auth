@@ -1,34 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>{{ i18n.t('auth.qrcode_page_title') }}</h1>
-    <form action="{{ url_for('setup_totp') }}" method="post">
+    <form class="login-form" action="{{ url_for('setup_totp') }}" method="post">
         {{ form.hidden_tag() }}
-        <div class="login totp-setup">
-            <div class="login-screen">
-                <div class="app-title">
-                    <h1>{{ i18n.t('auth.qrcode_page_title') }}</h1>
-                </div>
-                <div class="login-form">
-                    <p>
-                        {{ i18n.t('auth.qrcode_line1') }}<br/>
-                        {{ i18n.t('auth.qrcode_line2') }}:
-                    </p>
-                    <img width_="300" src="{{ url_for('qrcode') }}">
+        <div class="login-form-title">
+            <h1>{{ i18n.t('auth.qrcode_page_title') }}</h1>
+        </div>
+        <div class="login-form-fields">
+            <p>
+                {{ i18n.t('auth.qrcode_line1') }}<br/>
+                {{ i18n.t('auth.qrcode_line2') }}:
+            </p>
+            <img width_="300" src="{{ url_for('qrcode') }}">
 
-                    <p>{{ i18n.t('auth.qrcode_secret') }}: <b>{{ totp_secret }}</b></p>
+            <p>{{ i18n.t('auth.qrcode_secret') }}: <b>{{ totp_secret }}</b></p>
 
-                    <div class="control-group">
-                      {{ form.token(placeholder=i18n.t('auth.qrcode_code_placeholder'), autocomplete="off", autofocus=True, class_='login-field') }}
-                      {% for error in form.token.errors %}
-                        <br/><span style="color: red;">[{{ error }}]</span>
-                      {% endfor %}
-                    </div>
-     
-                    <input type="submit" value="{{ i18n.t('auth.qrcode_button') }}" class="btn btn-primary btn-large btn-block" >
-                    <br>
-                </div>
+            <div class="control-group">
+                {{ form.token(placeholder=i18n.t('auth.qrcode_code_placeholder'), autocomplete="off", autofocus=True) }}
+                {% for error in form.token.errors %}
+                <br/><span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
             </div>
+
+            <button class="button" type="submit">{{ i18n.t('auth.qrcode_button') }}</button>
         </div>
     </form>
 {% endblock %}

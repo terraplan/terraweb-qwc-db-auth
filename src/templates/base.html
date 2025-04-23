@@ -13,22 +13,22 @@
         <link rel="icon" href="{{form.favicon}}">
         {% endif %}
     </head>
-    <body>
+    <body
         {% if form.background %}
-        <div class="form-background" style="background-image: url('{{form.background}}');">
+            style="background-image: url('{{form.background}}');"
         {% endif %}
+    >
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <ul>
+        <ul class="flashed-messages">
             {% for message in messages %}
             <li>{{ message }}</li>
             {% endfor %}
         </ul>
         {% endif %}
         {% endwith %}
+        <div class="login-form-spacer"></div>
         {% block content %}{% endblock %}
-        {% if form.background %}
-        </div>
-        {% endif %}
+        <div class="login-form-spacer"></div>
     </body>
 </html>
