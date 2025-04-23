@@ -30,7 +30,7 @@
     "new_password_placeholder": "Neues Passwort",
     "new_password_confirm_placeholder": "Neues Passwort bestätigen",
 
-    "edit_password_reason_first_login": "Erste Anmeldung",
+    "edit_password_reason_requested": "Passwort muss geändert werden",
     "edit_password_reason_expired": "Ihr Passwort ist abgelaufen",
     "edit_password_message": "Bitte wählen Sie ein neues Passwort",
     "edit_password_successful": "Passwort wurde erfolgreich geändert",

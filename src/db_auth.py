@@ -40,7 +40,7 @@ class DBAuth:
     PASSWORD = 'password'
 
     # reasons requiring password change
-    PASSWORD_CHANGE_REASON_FIRST_LOGIN = 'first_login'
+    PASSWORD_CHANGE_REASON_REQUESTED = 'requested'
     PASSWORD_CHANGE_REASON_EXPIRED = 'expired'
 
     def __init__(self, tenant, mail, app):
@@ -180,8 +180,10 @@ class DBAuth:
                 # force password change on first sign in of default admin user
                 # NOTE: user.last_sign_in_at will be set after successful auth
                 force_password_change = (
-                    user and user.last_sign_in_at is None and (
-                        user.name == self.DEFAULT_ADMIN_USER or self.force_password_change_first_login
+                    user and user.force_password_change or (
+                        user.last_sign_in_at is None and (
+                            user.name == self.DEFAULT_ADMIN_USER or self.force_password_change_first_login
+                        )
                     )
                 )
 
@@ -224,7 +226,7 @@ class DBAuth:
                             self.logger.info(
                                 "Force password change on first login"
                             )
-                            reason = self.PASSWORD_CHANGE_REASON_FIRST_LOGIN
+                            reason = self.PASSWORD_CHANGE_REASON_REQUESTED
 
                         return self.require_password_change(
                             user, reason, target_url
@@ -556,6 +558,8 @@ class DBAuth:
 
                     # save new password
                     user.set_password(form.password.data)
+                    # clear force password change flag
+                    user.force_password_change = False
                     # clear token
                     user.reset_password_token = None
                     # Reset signing fail count
@@ -617,8 +621,8 @@ class DBAuth:
         form.reset_password_token.data = user.reset_password_token
         form.url.data = target_url
 
-        if reason == self.PASSWORD_CHANGE_REASON_FIRST_LOGIN:
-            flash(i18n.t('auth.edit_password_reason_first_login'))
+        if reason == self.PASSWORD_CHANGE_REASON_REQUESTED:
+            flash(i18n.t('auth.edit_password_reason_requested'))
         elif reason == self.PASSWORD_CHANGE_REASON_EXPIRED:
             flash(i18n.t('auth.edit_password_reason_expired'))
 
