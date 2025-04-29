@@ -135,6 +135,13 @@
         "force_password_change_first_login": {
           "description": "Whether to force users to change the password on first login (regardless of user force_password_change setting). Default: `false`",
           "type": "boolean"
+        },
+        "required_restore_input": {
+          "description": "Input required in password restore form. Can be one or both of `username` and `email`. Default: `['username', 'email']`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

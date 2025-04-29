@@ -98,6 +98,7 @@ class DBAuth:
         self.ip_blacklist_duration = config.get('ip_blacklist_duration', 300)
         self.ip_blacklist_max_attempt_count = config.get('ip_blacklist_max_attempt_count', 10)
         self.force_password_change_first_login = config.get('force_password_change_first_login', False)
+        self.required_restore_input = config.get('required_restore_input', ['username', 'email'])
 
         db_engine = DatabaseEngine()
         self.config_models = ConfigModels(
@@ -462,8 +463,12 @@ class DBAuth:
                 'new_password_contact_admin.html', form=form, i18n=i18n,
                 title=i18n.t("auth.new_password_page_title")
             )
-
         form = NewPasswordForm(meta=wft_locales())
+        if 'username' not in self.required_restore_input:
+            form.user.validators = []
+        if 'email' not in self.required_restore_input:
+            form.email.validators = []
+
         form.logo = self.login_logo
         form.background = self.login_background
         form.customstylesheet = self.customstylesheet
@@ -472,9 +477,18 @@ class DBAuth:
             # create session for ConfigDB
             with self.db_session() as db_session, db_session.begin():
 
-                entered_user = form.user.data
-                user = self.find_user(db_session, email=form.email.data)
-                if user and user.name == entered_user:
+                user_valid = False
+                if 'username' in self.required_restore_input and 'email' in self.required_restore_input:
+                    user = self.find_user(db_session, email=form.email.data)
+                    user_valid = user and user.name == form.user.data
+                elif 'username' in self.required_restore_input:
+                    user = self.find_user(db_session, name=form.user.data)
+                    user_valid = bool(user)
+                elif 'email' in self.required_restore_input:
+                    user = self.find_user(db_session, email=form.email.data)
+                    user_valid = bool(user)
+
+                if user_valid:
                     # generate and save reset token
                     user.reset_password_token = self.generate_token()
 
@@ -489,7 +503,9 @@ class DBAuth:
                         flash(i18n.t("auth.reset_mail_failed"))
                         return render_template(
                             'new_password.html', form=form, i18n=i18n,
-                            title=i18n.t("auth.new_password_page_title")
+                            title=i18n.t("auth.new_password_page_title"),
+                            show_username='username' in self.required_restore_input,
+                            show_email='email' in self.required_restore_input
                         )
                 else:
                     self.logger.info("User lookup failed")
@@ -500,7 +516,9 @@ class DBAuth:
 
         return render_template(
             'new_password.html', form=form, i18n=i18n,
-            title=i18n.t("auth.new_password_page_title")
+            title=i18n.t("auth.new_password_page_title"),
+            show_username='username' in self.required_restore_input,
+            show_email='email' in self.required_restore_input
         )
 
     def edit_password(self, token, identity=None):
