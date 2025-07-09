@@ -236,6 +236,10 @@ class DBAuth:
                     form.password.errors.append(login_fail_reason)
                     # Maybe different message when
                     # user.failed_sign_in_count >= MAX_LOGIN_ATTEMPTS
+            else:
+                errors = [f"{key}: {val}" for key, values in form.errors.items() for val in values]
+                for error in errors:
+                    flash(error)
 
         return render_template('login.html', form=form, i18n=i18n,
                             title=i18n.t("auth.login_page_title"),
