@@ -1,174 +1,58 @@
-[![](https://github.com/qwc-services/qwc-db-auth/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-db-auth/actions)
-[![docker](https://img.shields.io/docker/v/sourcepole/qwc-db-auth?label=Docker%20image&sort=semver)](https://hub.docker.com/r/sourcepole/qwc-db-auth)
+TERRAWEB-QWC-DB-AUTH
+================================
 
-Authentication with User DB
-===========================
+TERRAWEB-QWC-DB-AUTH is a Flask web framework with the "uv" package manager.
 
-Authentication service with local user database.
+**This repository is based on the [qwc-db-auth](https://github.com/qwc-services/qwc-db-auth).**
 
+# Quick start
 
-Configuration
--------------
+1. Go to the official Python downloads page and download the latest Python 3 version for Windows. Crucially, ensure the "Add Python to PATH" option is checked during installation. This allows you to run Python from the command line in any directory. 
 
-The static config files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
-e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
+2. Install uv:
 
-### DB Auth Service config
+    pip install uv
 
-* [JSON schema](schemas/qwc-db-auth.json)
-* File location: `$CONFIG_PATH/<tenant>/dbAuthConfig.json`
+3. Verify installation:
+    
+    python --version
+    uv --version
 
-Example:
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-db-auth/master/schemas/qwc-db-auth.json",
-  "service": "db-auth",
-  "config": {
-    "db_url": "postgresql:///?service=qwc_configdb"
-  }
-}
-```
+4. Clone the repository:
 
-Set the `MAX_LOGIN_ATTEMPTS` environment variable to set the maximum number of
-failed login attempts before sign in is blocked (default: `20`).
+    git clone https://github.com/terraplan/terraweb-qwc-db-auth.git
 
-A minimum password length of `8` with no other constraints is set by default. Optional password complexity constraints can be set using the following `config` options:
-```json
-"config": {
-  "password_min_length": 8,
-  "password_max_length": 128,
-  "password_constraints": [
-      "[A-Z]",
-      "[a-z]",
-      "\\d",
-      "[ !\"#$%&'()*+,\\-./\\\\:;<=>?@\\[\\]^_`{|}~]"
-  ],
-  "password_min_constraints": 3,
-  "password_constraints_message": "Password must contain at least three of these character types: uppercase letters, lowercase letters, numbers, special characters"
-}
-```
+5. Install dependencies:
 
-`password_min_length` and `password_max_length` can be set independently. `password_constraints` is a list of regular expression of which at least `password_min_constraints` have to match for the password to be valid, otherwise the `password_constraints_message` is shown. Note that the regular expression have to be JSON escaped and allow only patterns supported by Python's `re` module.
+    cd terraweb-qwc-db-auth
+    uv sync 
 
-If the `qwc_config.password_histories` table is present, additional optional password constraints may be set:
-```json
-"config": {
-  "password_expiry": 365,
-  "password_expiry_notice": 10,
-  "password_update_interval": 600,
-  "password_allow_reuse": false
-}
-```
+6. Create dbAuthConfig.json and pg_service.conf file: This is only required for local setup. In server this is all setup in the docker environment.
 
-* `password_expiry` (default: `-1`): Number of days until a password expires, or `-1` to disable. Forces a password change once expired.
-* `password_expiry_notice` (default: `-1`): Show an expiry notice within this number of days before a password expires, or `-1` to disable
-* `password_update_interval` (default: `-1`): Min number of seconds before a password may be changed again, or `-1` to disable
-* `password_allow_reuse` (default: `true`): Set whether a user may reuse previous passwords or not
+    Copy the file `.dbAuthConfig.json.template` to `.dbAuthConfig.json` anywhere in your filesystem. No need to change anything here.
+    Copy the file `.pg_service.conf.template` to `.pg_service.conf` anywhere in your filesystem and adjust your database information.
+  
+7. Create .flaskenv file: This is only required for local setup. In server the volumes/config folder is where the qwc-docker gets its configuration. The `PGSERVICEFILE=` config is needed in local because we are not using qwc-docker right now so for flask python code to connect to my local database.
 
-Besides the form based DB login, an (insecure) plain POST login is supported. This method can be
-activated by setting `POST_PARAM_LOGIN=True`. User and password are passed as POST parameters
-`username` and `password`.
-Usage example: `curl -d 'username=demo&password=demo' http://localhost:5017/login`.
+       Copy the file `.flaskenv.template` to `.flaskenv` and adjust to your local setup, especially set `CONFIG_PATH=` & `PGSERVICEFILE=` to the file path from step 6. 
+       Remember for `CONFIG_PATH=` it is folder path not file path.
 
-Additional user info fields from `qwc_config.user_infos` may be added to the JWT identity by setting `user_info_fields`:
-```json
-"config": {
-  "user_info_fields": ["surname", "first_name"]
-}
-```
+8. Create .env file:
 
-[Flask-Mail](https://pythonhosted.org/Flask-Mail/) is used for sending mails like password resets. These are the available options:
-* `MAIL_SERVER`: default ‘localhost’
-* `MAIL_PORT`: default 25
-* `MAIL_USE_TLS`: default False
-* `MAIL_USE_SSL`: default False
-* `MAIL_DEBUG`: default app.debug
-* `MAIL_USERNAME`: default None
-* `MAIL_PASSWORD`: default None
-* `MAIL_DEFAULT_SENDER`: default None
-* `MAIL_MAX_EMAILS`: default None
-* `MAIL_SUPPRESS_SEND`: default app.testing
-* `MAIL_ASCII_ATTACHMENTS`: default False
+       Copy the file `.env.template` to `.env` and set `AUTH_URL=` to TerraWeb authentication URL.
 
-In addition the standard Flask `TESTING` configuration option is used by Flask-Mail in unit tests.
+9. Setup database:
 
-### Two factor authentication
+    Open pgadmin and create a database `qwc_configdb` > Restore backup file > But before you need to create `qwc_admin` Login/Group Roles in pgadmin.
 
-Two factor authentication using TOTP can be enabled by setting the environment variable `TOTP_ENABLED=True`.
-This will require an additional verification token after sign in, based on the user's TOTP secret.
+10. Start local service: 
 
-A personal QR code for setting up the two factor authentication is shown to the user on first sign in (or if the TOTP secret is empty).
-The TOTP issuer name for your application can be set using the environment variable `TOTP_ISSUER_NAME="QWC Services"`.
+    uv run src/server.py
 
-An user's TOTP secret can be reset by clearing it in the Admin GUI user form.
-
-
-### Customization
-
-You can add a custom logo and a custom background image by setting the following `config` options:
-
-```json
-"config": {
-  "background_image_url": "<url>",
-  "logo_image_url": "<url>"
-}
-```
-
-The specified URLs can be absolute or relative. For relative URLs, you can write i.e.
-
-```json
-"config": {
-  "background_image_url": "/auth/static/background.jpg",
-  "logo_image_url": "/auth/static/logo.jpg"
-}
-```
-
-where `/auth` is the service mountpoint and place your custom images inside the `static` subfolder of the auth-service, or, if using docker and docker-compose, mount them accordingly:
-
-    qwc-auth-service:
-      [...]
-      volumes:
-        - ./volumes/assets/Background.jpg:/srv/qwc_service/static/background.jpg
-        - ./volumes/assets/logo.png:/srv/qwc_service/static/logo.jpg
-
-If you want to override some styles, you can set the `customstylesheet` `config` option to the name of a file below the `static` subfolder of the auth-service, and it will get included into the base template.
-
-Usage
------
-
-Run standalone application:
-
-    python src/server.py
-
-Endpoints:
+    Endpoints:
 
     http://localhost:5017/login
 
     http://localhost:5017/logout
 
-Docker usage
-------------
-
-See sample [docker-compose.yml](https://github.com/qwc-services/qwc-docker/blob/master/docker-compose-example.yml) of [qwc-docker](https://github.com/qwc-services/qwc-docker).
-
-
-Development
------------
-
-Install dependencies:
-
-    uv sync
-
-Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
-
-    export CONFIG_PATH=../qwc-docker/volumes/config
-
-Configure development environment:
-
-    echo FLASK_ENV=development >.flaskenv
-    export MAIL_SUPPRESS_SEND=True
-    export MAIL_DEFAULT_SENDER=from@example.com
-
-Start local service:
-
-     uv run src/server.py
+See [qwc-db-auth](https://github.com/qwc-services/qwc-db-auth) for further information.
