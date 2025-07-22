@@ -245,6 +245,35 @@ class DBAuth:
                             title=i18n.t("auth.login_page_title"),
                             login_hint=self.login_hint)
 
+    def auth_redirect(self):
+        """Handle GET request for authentication redirect.
+        
+        Checks for access token cookie and redirects to target URL with token if valid.
+        """
+        base_url =  os.environ.get("AUTH_URL")
+        self.logger.info("base url: %s" % base_url)
+
+        # Get redirect URL from query parameters
+        redirect_url = request.args.get('redirect')
+        self.logger.info("redirect url: %s" % redirect_url)
+        if not redirect_url:
+            abort(400, description="Missing redirectUrl parameter")
+         
+        access_token = request.cookies.get('access_token_cookie')
+        self.logger.info("access token: %s" % access_token)
+        if not access_token:
+            abort(401, description="Authentication token missing")
+        
+        # Create redirect response
+        params = {
+            'token': access_token,
+            'redirect': redirect_url
+        }
+        # Load from environment variable (with fallback)
+        target_url = (base_url + "/auth-redirect?" + urlencode(params))
+        self.logger.info("target url: %s" % target_url)
+        return redirect(target_url)
+    
     def verify_login(self):
         """Verify user login (e.g. from basic auth header)."""
         req = request.form
