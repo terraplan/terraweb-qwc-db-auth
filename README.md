@@ -45,6 +45,8 @@ TERRAWEB-QWC-DB-AUTH is a Flask web framework with the "uv" package manager.
 
     Open pgadmin and create a database `qwc_configdb` > Restore backup file > But before you need to create `qwc_admin` Login/Group Roles in pgadmin.
 
+    Get the backup from Next cloud folder `Terraplan > 11 QWC > qgis_strato.backup`
+
 10. Start local service: 
 
     uv run src/server.py
