@@ -840,7 +840,8 @@ class DBAuth:
 
         # Create the tokens we will be sending back to the user
         identity = {
-            'username': user.name
+            'username': user.name,
+            'email': user.email
         }
         # collect custom user info fields
         user_info = user.user_info
